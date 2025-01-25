@@ -1,0 +1,135 @@
+/* General Page Container */
+.set-reminder-times {  
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: #f9f9f9;
+    padding-left: 100px; /* Adjust to account for Navbar */
+    box-sizing: border-box;
+  }
+  
+  /* Main Content Area */
+  .set-reminder-times > div {
+    width: calc(100% - 60px); /* Adjust width for Navbar */
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+  }
+  
+  /* Page Header */
+  .set-reminder-times h1 {
+    font-size: 2rem;
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  /* Form Elements */
+  label {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+    display: block;
+    margin-bottom: 8px;
+  }
+  
+  select,
+  input[type="time"] {
+    padding: 0.8rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+    background-color: #fafafa;
+    width: 100%;
+    transition: border-color 0.3s ease;
+  }
+  
+  select:focus,
+  input[type="time"]:focus {
+    border-color: #4CAF50;
+  }
+  
+  /* Buttons */
+  .reminder-button {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    color: #fff;
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s ease;
+    width: 100%;
+    margin-top: 20px;
+  }
+  
+  .reminder-button:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+  }
+  
+  .reminder-button:active {
+    transform: translateY(1px);
+  }
+  
+  /* Select and Input Layout */
+  div {
+    margin-bottom: 1.5rem;
+  }
+  .selected-members {
+    margin: 15px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.selected-member {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    background: #e0e0e0;
+    border-radius: 15px;
+    font-size: 14px;
+}
+
+.selected-member span {
+    margin-right: 8px;
+}
+
+.selected-member button {
+    background: none;
+    border: none;
+    color: #ff0000;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.selected-member button:hover {
+    color: #cc0000;
+}
+
+  
+  /* Responsive Design for Smaller Screens */
+  @media (max-width: 768px) {
+    .set-reminder-page {
+      padding-left: 0; /* Remove left padding on smaller screens */
+    }
+  
+    .set-reminder-page h1 {
+      font-size: 1.8rem;
+    }
+  
+    select,
+    input[type="time"] {
+      width: 100%; /* Full-width inputs on smaller screens */
+    }
+  
+    .reminder-button {
+      width: 100%; /* Make button full-width on mobile */
+    }
+  }
+  

@@ -1,0 +1,94 @@
+/* StandupDetailsPage.css */
+
+/* Ensure the page layout accounts for the Navbar */
+.standup-details-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-left: 80px; /* Offset for Navbar */
+    padding-top: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Title styling */
+  .standup-details-page h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #671212;
+  }
+  
+  /* Details section styling */
+  .standup-details-page p {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #555;
+  }
+  
+  /* Label for each item in the details */
+  .standup-details-page p strong {
+    font-weight: bold;
+    color: #222;
+  }
+  
+  /* Styling for the answers list */
+  .standup-details-page ul {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+    font-size: 1.1rem;
+  }
+  
+  .standup-details-page ul li {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .standup-details-page ul li:last-child {
+    border-bottom: none;
+  }
+  
+  /* Background color and padding for the page */
+  .standup-details-page {
+    background-color: #f8f8f8;
+    min-height: 100vh;
+    width: calc(100% - 60px); /* Account for Navbar width */
+    padding-left: 20px; /* Add padding for left side */
+    transition: all 0.3s ease;
+  }
+  
+  /* Ensure the content is spaced out */
+  .standup-details-page div {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  
+  /* Centered content inside the page */
+  .standup-details-page h1, .standup-details-page p {
+    text-align: center;
+  }
+  
+  .standup-link {
+    text-decoration: none;
+    color: #333;
+  }
+  
+  /* Responsive Styling */
+  @media (max-width: 768px) {
+    .standup-details-page {
+      padding-left: 20px; /* More padding for smaller screens */
+    }
+  
+    .standup-details-page h1 {
+      font-size: 1.5rem;
+    }
+  
+    .standup-details-page p {
+      font-size: 1rem;
+    }
+  
+    .standup-details-page ul li {
+      font-size: 1rem;
+    }
+  }
+  

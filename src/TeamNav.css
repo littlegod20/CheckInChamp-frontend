@@ -1,0 +1,122 @@
+/* Team Management Container */
+.team-management-team-nav{
+  width: calc(100% - 60px); /* Adjust width to account for the Navbar */
+  margin-left: 60px; /* Offset for the Navbar */
+  padding: 20px;
+  background-color: #ffffff;
+  font-family: 'Arial', sans-serif;
+  box-sizing: border-box; /* Ensures padding is included in width calculations */
+}
+
+/* Standup Name Title */
+.team-management-team-nav h1 {
+  font-size: 16px;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Standup Name Textarea */
+.team-management-team-nav textarea {
+  display: block;
+  margin: 0 auto 20px auto; /* Center the textarea */
+  width: 80%;
+  max-width: 800px; /* Limit maximum width */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  font-size: 16px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.team-management-team-nav textarea:focus {
+  border-color: #4CAF50;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+  outline: none;
+}
+
+/* Section Header (for Standup creation steps) */
+.team-nav-header {
+  display: flex;
+  justify-content: space-between; /* Space out the items horizontally */
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.team-nav-header h3 {
+  font-size: 20px;
+  color: #555;
+  margin: 0; /* Remove default margin */
+  text-align: left;
+}
+
+/* Navbar Items */
+.team-nav-item-container {
+  display: flex;
+  flex-direction: column; /* Arrange links in a column */
+  justify-content: center;
+  align-items: flex-start; /* Align items to the left */
+  width: 100%; /* Take up the full width of the container */
+}
+
+.team-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  background-color: #f4f4f4;
+  margin: 10px 0;
+  padding: 15px 20px;
+  border-radius: 5px;
+  color: #333;
+  font-size: 18px;
+  font-weight: 500;
+  transition: background-color 0.3s, transform 0.2s;
+  min-width: 120px; /* Minimum button width */
+  text-align: center;
+}
+
+.team-nav-item:hover {
+  background-color: #4CAF50;
+  color: #ffffff;
+  transform: translateY(-3px);
+}
+
+.team-nav-item:active {
+  transform: translateY(0);
+}
+
+/* Icon Styling */
+.team-nav-item .icon {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #4CAF50;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 16px;
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .team-management textarea {
+    width: 90%; /* Adjust for smaller screens */
+  }
+
+  .team-nav-header {
+    flex-direction: column; /* Stack header items vertically */
+    align-items: center; /* Center-align the header */
+  }
+
+  .team-nav-item-container {
+    flex-direction: column; /* Ensure links stack vertically */
+  }
+
+  .team-nav-item {
+    width: 100%; /* Full width for mobile view */
+  }
+}
