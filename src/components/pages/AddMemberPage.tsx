@@ -48,6 +48,7 @@ const AddMemberPage: React.FC = () => {
       try {
         // Add members to the team
         const added = await addMember(teamId, members);
+        console.log('Added members:', added);
         if (added.status !== 200 && added.status !== 201) {
           throw new Error('Failed to add members to the team');
         }
