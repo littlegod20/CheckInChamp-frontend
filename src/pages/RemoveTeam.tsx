@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Navbar from '../Navbar';
+import Navbar from '../components/Navbar';
 
 const RemoveTeam: React.FC = () => {
     const [teams, setTeams] = useState<string[]>([]);
