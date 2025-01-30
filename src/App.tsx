@@ -4,7 +4,7 @@ import './App.css';
 
 const App: React.FC = () => {
   return (
-    <div className='app'>
+    <div className='app bg-green-400'>
       <Routes />
     </div>
   );
