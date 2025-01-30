@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import { createTeam } from '../../services/api';
-import Navbar from '../Navbar';
+import { createTeam } from '../services/api';
+import Navbar from '../components/Navbar';
 import "../styles/CreateTeam.css";
 
 const TeamPage: React.FC = () => {

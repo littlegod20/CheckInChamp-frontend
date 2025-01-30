@@ -1,53 +1,67 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import Navbar from '../Navbar';
-import '../styles/StandupDetailsPage.css';
+import React from "react";
+import { useParams } from "react-router-dom";
+import Navbar from "../components/Navbar";
+import "../styles/StandupDetailsPage.css";
 
 // Mock data
 const mockStandups = [
   {
     id: 1,
-    team: 'Team Alpha',
-    date: '2025-01-20',
-    member: 'Alice',
-    status: 'completed',
+    team: "Team Alpha",
+    date: "2025-01-20",
+    member: "Alice",
+    status: "completed",
     answers: [
-      { question: 'What did you do yesterday?', answer: 'Worked on the API integration.' },
-      { question: 'What are you doing today?', answer: 'Fixing bugs in the frontend.' },
-      { question: 'Any blockers?', answer: 'None at the moment.' },
+      {
+        question: "What did you do yesterday?",
+        answer: "Worked on the API integration.",
+      },
+      {
+        question: "What are you doing today?",
+        answer: "Fixing bugs in the frontend.",
+      },
+      { question: "Any blockers?", answer: "None at the moment." },
     ],
   },
-  // Add more mock standups here    
+  // Add more mock standups here
   {
     id: 2,
-    team: 'Team Beta',
-    date: '2025-01-20',
-    member: 'Bob',
-    status: 'pending',
+    team: "Team Beta",
+    date: "2025-01-20",
+    member: "Bob",
+    status: "pending",
     answers: [
-      { question: 'What did you do yesterday?', answer: 'Worked on the UI design.' },
-      { question: 'What are you doing today?', answer: 'Writing unit tests.' },
-      { question: 'Any blockers?', answer: 'None at the moment.' },
+      {
+        question: "What did you do yesterday?",
+        answer: "Worked on the UI design.",
+      },
+      { question: "What are you doing today?", answer: "Writing unit tests." },
+      { question: "Any blockers?", answer: "None at the moment." },
     ],
   },
-    {
-        id: 3,
-        team: 'Team Alpha',
-        date: '2025-01-21',
-        member: 'Charlie',
-        status: 'completed',
-        answers: [
-        { question: 'What did you do yesterday?', answer: 'Worked on the API integration.' },
-        { question: 'What are you doing today?', answer: 'Fixing bugs in the frontend.' },
-        { question: 'Any blockers?', answer: 'None at the moment.' },
-        ],
-    },      
-  
+  {
+    id: 3,
+    team: "Team Alpha",
+    date: "2025-01-21",
+    member: "Charlie",
+    status: "completed",
+    answers: [
+      {
+        question: "What did you do yesterday?",
+        answer: "Worked on the API integration.",
+      },
+      {
+        question: "What are you doing today?",
+        answer: "Fixing bugs in the frontend.",
+      },
+      { question: "Any blockers?", answer: "None at the moment." },
+    ],
+  },
 ];
 
 const StandupDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>(); // Get dynamic id from URL
-  const standup = mockStandups.find((item) => item.id === parseInt(id || '0')); // Find the standup by ID
+  const standup = mockStandups.find((item) => item.id === parseInt(id || "0")); // Find the standup by ID
 
   if (!standup) {
     return (
@@ -59,13 +73,21 @@ const StandupDetailsPage: React.FC = () => {
   }
 
   return (
-    <div className='standup-details-page'>
+    <div className="standup-details-page">
       <Navbar />
       <h1>Standup Details</h1>
-      <p><strong>Team:</strong> {standup.team}</p>
-      <p><strong>Date:</strong> {standup.date}</p>
-      <p><strong>Member:</strong> {standup.member}</p>
-      <p><strong>Status:</strong> {standup.status}</p>
+      <p>
+        <strong>Team:</strong> {standup.team}
+      </p>
+      <p>
+        <strong>Date:</strong> {standup.date}
+      </p>
+      <p>
+        <strong>Member:</strong> {standup.member}
+      </p>
+      <p>
+        <strong>Status:</strong> {standup.status}
+      </p>
       {standup.answers ? (
         <ul>
           {standup.answers.map((answer, index) => (

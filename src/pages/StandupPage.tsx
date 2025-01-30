@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Navbar from '../Navbar';
+import Navbar from '../components/Navbar';
 import '../styles/StandupPage.css';
-import { getStandupResponses } from '../../services/api';
+import { getStandupResponses } from '../services/api';
 
 interface Standup {
   id: string;

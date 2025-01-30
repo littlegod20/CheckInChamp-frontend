@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import Navbar from '../Navbar';
-import TeamNav from '../TeamNav';
+import Navbar from '../components/Navbar';
+import TeamNav from '../components/TeamNav';
 import "../styles/AddMemberPage.css";
 import "../styles/Global.css";
-import { getMembers, addMember, setTeamReminders } from '../../services/api';
+import { getMembers, addMember, setTeamReminders } from '../services/api';
 
 interface Member {
   id: string;

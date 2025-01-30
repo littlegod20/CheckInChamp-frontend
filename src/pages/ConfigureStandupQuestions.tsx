@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import Navbar from '../Navbar';
-import TeamNav from '../TeamNav';
+import Navbar from '../components/Navbar';
+import TeamNav from '../components/TeamNav';
 import "../styles/ConfigureStandupQuestions.css";
 import "../styles/Global.css";
-import { configureStandupQuestions } from '../../services/api';
+import { configureStandupQuestions } from '../services/api';
 interface Question {
   id: number;
   text: string;
