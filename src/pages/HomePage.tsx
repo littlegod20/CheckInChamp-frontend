@@ -1,14 +1,20 @@
+import { Laugh } from "lucide-react";
 import React from "react";
-import { Link } from "react-router-dom";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faClipboard, faChartBar } from '@fortawesome/free-solid-svg-icons';
+import Header from "../components/Header";
+
+const mood = [
+  {
+    teamName: "Team Checker",
+    mood: Laugh,
+  },
+];
 
 const HomePage: React.FC = () => {
   return (
     <div className="">
-      <h1>Welcome to the Check In Champ Bot App</h1>
-      <p>Streamline your team's daily standups and reporting with ease.</p>
-      <div className="home-links">
+      {/* <h1>Welcome to the Check In Champ Bot App</h1>
+      <p className="text-sm">Streamline your team's daily standups and reporting with ease.</p> */}
+      {/* <div className="home-links">
         <Link to="/teams" className="card">
           <div className="card-icon">
             <FontAwesomeIcon icon={faUsers} />
@@ -28,7 +34,21 @@ const HomePage: React.FC = () => {
           </div>
           <div className="card-title">Generate Reports</div>
         </Link>
-      </div>
+      </div> */}
+
+      <section>
+        <Header
+          title="Welcome to Check In Champ"
+          description="Streamline your team's daily standups and reporting with ease."
+          Button={<button>Create Team</button>}
+        />
+      </section>
+
+      <section className="bg-black-secondary max-w-[500px] flex p-2 justify-center rounded-xl">
+        <div>
+          <p>Mood For Teams</p>
+        </div>
+      </section>
     </div>
   );
 };
