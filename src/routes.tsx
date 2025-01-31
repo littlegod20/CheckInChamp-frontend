@@ -36,6 +36,7 @@ const router = createBrowserRouter([
   { path: "*", element: <NotFoundPage /> },
 ]);
 
+
 const Routes: React.FC = () => {
   return <RouterProvider router={router} />;
 };

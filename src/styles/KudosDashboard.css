@@ -1,0 +1,93 @@
+.kudos-dashboard {
+  display: flex;
+  justify-content: center; /* Centers horizontally */
+  align-items: center; /* Centers vertically */
+  background-color: #f9f9f9;
+  min-height: 100vh;
+}
+
+/* Navbar */
+.kudos-dashboard .navbar {
+  width: 40px;
+  
+}
+
+/* Ensure the content inside is properly contained */
+.dashboard-content {
+  width: 90%; /* Adjust width as needed */
+  max-width: 900px; /* Prevents it from getting too wide */
+  padding: 20px;
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  margin-left: 60px; /* Keeps space for navbar */
+}
+
+/* Titles */
+.dashboard-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* Leaderboard Section */
+.leaderboard-section {
+  margin-bottom: 30px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.table th {
+  background-color: #f1f1f1;
+}
+
+/* No Data */
+.no-data {
+  text-align: center;
+  padding: 15px;
+  color: gray;
+}
+
+/* Filters */
+.filter-section {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.filter-select,
+.filter-input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.reset-btn {
+  background-color: #ff5e57;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.reset-btn:hover {
+  background-color: #e04e47;
+}

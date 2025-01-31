@@ -16,6 +16,12 @@ interface Answer {
   question: string;
   answer: string;
 }
+interface KudosData {
+  giverId: string;
+  receiverId: string;
+  category: string;
+  reason: string;
+}
 
 // Set up base URL for your backend API
 const api = axios.create({
@@ -89,4 +95,34 @@ export const getMembers = async () => {
 // Function to set team reminders
 export const setTeamReminders = async (reminders: { channel: string; text: string; scheduleTime: string }) => {
   return await api.post(`/teams/team-reminder`, reminders);
+};
+
+// Fetch all kudos with optional filters (teamMember, category, date range)
+export const getKudos = async (filters?: { teamMember?: string; category?: string; startDate?: string; endDate?: string }) => {
+  return api.get("/kudos", { params: filters });
+};
+
+// Get kudos received by a specific user
+export const getReceivedKudos = async (userId: string) => {
+  return api.get(`/kudos/received/${userId}`);
+};
+
+// Get kudos given by a specific user
+export const getGivenKudos = async (userId: string) => {
+  return api.get(`/kudos/given/${userId}`);
+};
+
+// Get kudos leaderboard (users with most kudos)
+export const getKudosLeaderboard = async () => {
+  return api.get("/kudos/leaderboard");
+};
+
+// Get kudos statistics (e.g., total given/received per user)
+export const getKudosStats = async () => {
+  return api.get("/kudos/stats");
+};
+
+// Get kudos trends over time (e.g., kudos given per day)
+export const getKudosTrends = async () => {
+  return api.get("/kudos/trends");
 };
