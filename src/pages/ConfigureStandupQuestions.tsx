@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import TeamNav from '../components/TeamNav';
+// import TeamNav from '../components/TeamNav';
 import "../styles/ConfigureStandupQuestions.css";
 import "../styles/Global.css";
 import { configureStandupQuestions } from '../services/api';
@@ -46,7 +46,7 @@ const ConfigureStandupQuestions: React.FC = () => {
   return (
     <div className="page-container configure-questions">
       <Navbar />
-      <TeamNav />
+      {/* <TeamNav /> */}
       <h1>Configure Standup Questions</h1>
       <form className="questions-form" onSubmit={handleSaveQuestions}>
         {/* Intro Message Field

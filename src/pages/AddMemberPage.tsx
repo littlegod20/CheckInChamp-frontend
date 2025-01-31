@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import TeamNav from '../components/TeamNav';
+// import TeamNav from '../components/TeamNav';
 import "../styles/AddMemberPage.css";
 import "../styles/Global.css";
 import { getMembers, addMember, setTeamReminders } from '../services/api';
@@ -94,7 +94,7 @@ const AddMemberPage: React.FC = () => {
   return (
     <div className="page-container add-member-page">
       <Navbar />
-      <TeamNav />
+      {/* <TeamNav /> */}
       <h1>Add Participants to Team</h1>
       <form className="add-member-form" onSubmit={handleAddMember}>
         <label>

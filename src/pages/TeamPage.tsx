@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { deleteTeam, removeMember, getTeams, getMembers } from '../services/api';
 import Navbar from '../components/Navbar';
-import '../styles/TeamPage.css';
 
 interface Team {
   id: string;

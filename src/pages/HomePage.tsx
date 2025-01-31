@@ -1,14 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import "../styles/HomePage.css";
-import Navbar from "../components/Navbar";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faClipboard, faChartBar } from '@fortawesome/free-solid-svg-icons';
 
 const HomePage: React.FC = () => {
   return (
-    <div className="home-page">
-      <Navbar />
+    <div className="">
       <h1>Welcome to the FlowSync Bot App</h1>
       <p>Streamline your team's daily standups and reporting with ease.</p>
       <div className="home-links">
