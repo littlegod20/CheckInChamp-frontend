@@ -6,7 +6,7 @@ import { faUsers, faClipboard, faChartBar } from '@fortawesome/free-solid-svg-ic
 const HomePage: React.FC = () => {
   return (
     <div className="">
-      <h1>Welcome to the FlowSync Bot App</h1>
+      <h1>Welcome to the Check In Champ Bot App</h1>
       <p>Streamline your team's daily standups and reporting with ease.</p>
       <div className="home-links">
         <Link to="/teams" className="card">
