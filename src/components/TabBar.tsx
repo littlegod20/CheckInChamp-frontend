@@ -8,7 +8,7 @@ const TabBar: React.FC<TabBarTypes> = ({
 }) => {
   return (
     <div
-      className={`flex p-1 gap-2 items-center duration-300 ease-in hover:bg-green-primary rounded-full w-4/5 cursor-pointer ${
+      className={`flex p-1 gap-2 items-center justify-center md:justify-start duration-300 ease-in hover:bg-green-primary rounded-full w-4/5 cursor-pointer ${
         isActive === name.toLowerCase() ? "bg-green-primary font-bold" : ""
       }`}
       onClick={() => onNavigation(name.toLowerCase())}
@@ -20,7 +20,7 @@ const TabBar: React.FC<TabBarTypes> = ({
           <Icon />
         </div>
       )}
-      <p>{name}</p>
+      <p className="hidden md:block">{name}</p>
     </div>
   );
 };

@@ -4,6 +4,9 @@ import "./App.css";
 import HomePage from "./pages/HomePage";
 import ManageTeam from "./pages/TeamPage";
 import MainLayout from "./layout";
+import StandupsPage from "./pages/StandupPage";
+import MoodTrackingPage from "./pages/MoodTracking";
+import MasterAnalyticsPage from "./pages/MasterAnalytics";
 
 const App: React.FC = () => {
   return (
@@ -12,6 +15,9 @@ const App: React.FC = () => {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<HomePage />} />
           <Route path="/teams/" element={<ManageTeam />} />
+          <Route path="/standups/" element={<StandupsPage />} />
+          <Route path="/mood tracking" element={<MoodTrackingPage />} />
+          <Route path="/master analytics" element={<MasterAnalyticsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

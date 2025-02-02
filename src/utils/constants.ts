@@ -1,16 +1,36 @@
-import { Calendar1, ChartPie, Home } from "lucide-react";
+import { ClipboardList, Cpu, Group, Home, ListCheck, Meh, Trophy } from "lucide-react";
 
 export const tabs = [
   {
-    name: "Home",
+    name: "DashBoard",
     Icon: Home,
   },
   {
-    name: "Schedule",
-    Icon: Calendar1,
+    name: "Teams",
+    Icon: Group,
   },
   {
-    name: "Analytics",
-    Icon: ChartPie,
+    name: "Standups",
+    Icon: ListCheck,
+  },
+  // {
+  //   name: "Data & Analytics",
+  //   Icon: Database,
+  // },
+  {
+    name: "Mood Tracking",
+    Icon: Meh,
+  },
+  {
+    name: "Kudos",
+    Icon: Trophy,
+  },
+  {
+    name: "Polls",
+    Icon: ClipboardList,
+  },
+  {
+    name: "Master Analytics",
+    Icon: Cpu,
   },
 ];
