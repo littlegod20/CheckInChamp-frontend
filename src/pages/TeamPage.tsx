@@ -1,3 +1,4 @@
+import { FormTypes } from "@/types/CardWithFormTypes";
 import { Pencil, PencilIcon, Plus, Trash2, UserPlus2Icon } from "lucide-react";
 import { useState } from "react";
 
@@ -194,61 +195,99 @@ import { useState } from "react";
 
 // export default TeamsPage;
 
-interface Team {
-  id: string;
-  name: string;
-  members: string[];
-  schedule: string[];
-  questions: string[];
-  reminders: string[];
-  timezone: string;
-}
+// interface Team {
+//   id: string;
+//   name: string;
+//   members: string[];
+//   schedule: string[];
+//   questions: string[];
+//   reminders: string[];
+//   timezone: string;
+// }
 
 const TeamsPage = () => {
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [selectedTeam, setSelectedTeam] = useState<FormTypes | null>(null);
   const [activeTab, setActiveTab] = useState<
     "members" | "schedule" | "questions" | "reminders"
   >("members");
   const [newMember, setNewMember] = useState("");
 
   // Dummy data
-  const [teams, setTeams] = useState<Team[]>([
+  const [teams, setTeams] = useState<FormTypes[]>([
     {
       id: "1",
       name: "Engineering Team",
       members: ["Alice", "Bob", "Charlie"],
-      schedule: ["Monday 09:00", "Wednesday 09:00"],
-      questions: [
-        "What did you work on yesterday?",
-        "What are you working on today?",
-      ],
-      reminders: ["09:15", "12:00"],
+      standUpConfig: {
+        questions: [
+          {
+            id: 0,
+            text: "What did you work on yesterday?",
+            type: "text",
+            options: [],
+          },
+          {
+            id: 2,
+            text: "What are you working on today?",
+            type: "text",
+            options: [],
+          },
+        ],
+
+        standUpDays: ["Monday 09:00", "Wednesday 09:00"],
+        standUpTimes: ["09:15", "12:00"],
+        reminderTimes: ["09:15", "12:00"],
+      },
       timezone: "UTC",
     },
     {
       id: "2",
-      name: "Dummy Team",
+      name: "Static Team",
       members: ["Alice", "Bob", "Charlie"],
-      schedule: ["Monday 09:00", "Wednesday 09:00"],
-      questions: [
-        "What did you work on yesterday?",
-        "What are you working on today?",
-      ],
-      reminders: ["09:15", "12:00"],
+      standUpConfig: {
+        questions: [
+          {
+            id: 0,
+            text: "What did you work on yesterday?",
+            type: "text",
+            options: [],
+          },
+          {
+            id: 2,
+            text: "What are you working on today?",
+            type: "text",
+            options: [],
+          },
+        ],
+
+        standUpDays: ["Monday 09:00", "Wednesday 09:00"],
+        standUpTimes: ["09:15", "12:00"],
+        reminderTimes: ["09:15", "12:00"],
+      },
       timezone: "UTC",
     },
     // Add more dummy teams...
   ]);
 
   const handleAddTeam = () => {
-    const newTeam: Team = {
+    const newTeam: FormTypes = {
       id: Date.now().toString(),
       name: `New Team ${teams.length + 1}`,
       members: [],
-      schedule: [],
-      questions: [],
-      reminders: [],
-      timezone: "UTC",
+      standUpConfig: {
+        questions: [
+          {
+            id: 0,
+            text: "",
+            type: "",
+            options: [],
+          },
+        ],
+        standUpDays: [],
+        standUpTimes: [],
+        reminderTimes: [],
+      },
+      timezone: "",
     };
     setTeams([...teams, newTeam]);
   };
@@ -277,7 +316,7 @@ const TeamsPage = () => {
         </div>
         <button
           onClick={handleAddTeam}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
+          className="bg-green-primary text-white px-4 py-2 rounded-lg hover:bg-green-primary flex items-center"
         >
           <Plus className="h-5 w-5 mr-2" />
           New Team
@@ -295,14 +334,14 @@ const TeamsPage = () => {
                 onClick={() => setSelectedTeam(team)}
                 className={`p-4 rounded-lg cursor-pointer transition-colors ${
                   selectedTeam?.id === team.id
-                    ? "bg-blue-50 border-blue-500"
+                    ? "bg-blue-50 border-green-primary"
                     : "hover:bg-gray-50"
                 }`}
               >
                 <div className="flex justify-between items-center">
                   <h3 className="font-medium">{team.name}</h3>
                   <div className="flex space-x-2">
-                    <button className="text-gray-400 hover:text-blue-500">
+                    <button className="text-gray-400 hover:text-green-primary">
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button className="text-gray-400 hover:text-red-500">
@@ -312,7 +351,7 @@ const TeamsPage = () => {
                 </div>
                 <div className="mt-2 text-sm text-gray-600">
                   <p>{team.members.length} members</p>
-                  <p>{team.schedule.length} scheduled days</p>
+                  <p>{team.standUpConfig.standUpDays.length} scheduled days</p>
                 </div>
               </div>
             ))}
@@ -325,7 +364,7 @@ const TeamsPage = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold">{selectedTeam.name}</h2>
               <div className="flex space-x-2">
-                <button className="text-gray-400 hover:text-blue-500">
+                <button className="text-gray-400 hover:text-green-secondary">
                   <Pencil className="h-5 w-5" />
                 </button>
                 <button className="text-gray-400 hover:text-red-500">
@@ -343,7 +382,7 @@ const TeamsPage = () => {
                     onClick={() => setActiveTab(tab)}
                     className={`pb-2 px-4 ${
                       activeTab === tab
-                        ? "border-b-2 border-blue-500 text-blue-500"
+                        ? "border-b-2 border-green-primary text-green-secondary"
                         : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
@@ -367,7 +406,7 @@ const TeamsPage = () => {
                     />
                     <button
                       onClick={handleAddMember}
-                      className="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600"
+                      className="bg-green-primary text-white px-4 py-2 rounded-r-lg hover:bg-green-secondary"
                     >
                       <UserPlus2Icon className="h-5 w-5" />
                     </button>
@@ -407,22 +446,24 @@ const TeamsPage = () => {
                       ))}
                     </select>
                     <input type="time" className="p-2 border rounded-lg" />
-                    <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                    <button className="bg-green-primary text-white px-4 py-2 rounded-lg hover:bg-green-secondary">
                       <Plus className="h-5 w-5" />
                     </button>
                   </div>
                   <div className="space-y-2">
-                    {selectedTeam.schedule.map((schedule, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
-                      >
-                        <span>{schedule}</span>
-                        <button className="text-red-500 hover:text-red-600">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
+                    {selectedTeam.standUpConfig.standUpDays.map(
+                      (schedule, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
+                        >
+                          <span>{schedule}</span>
+                          <button className="text-red-500 hover:text-red-600">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               )}
@@ -435,27 +476,29 @@ const TeamsPage = () => {
                       placeholder="Add new question"
                       className="flex-1 p-2 border rounded-lg"
                     />
-                    <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                    <button className="bg-green-primary text-white px-4 py-2 rounded-lg hover:bg-green-secondary">
                       <Plus className="h-5 w-5" />
                     </button>
                   </div>
                   <div className="space-y-2">
-                    {selectedTeam.questions.map((question, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
-                      >
-                        <span>{question}</span>
-                        <div className="flex space-x-2">
-                          <button className="text-blue-500 hover:text-blue-600">
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                          <button className="text-red-500 hover:text-red-600">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                    {selectedTeam.standUpConfig.questions.map(
+                      (question, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
+                        >
+                          <span>{question.text}</span>
+                          <div className="flex space-x-2">
+                            <button className="text-green-primary hover:text-green-secondary">
+                              <PencilIcon className="h-4 w-4" />
+                            </button>
+                            <button className="text-red-500 hover:text-red-600">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                 </div>
               )}
@@ -464,22 +507,24 @@ const TeamsPage = () => {
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4">
                     <input type="time" className="p-2 border rounded-lg" />
-                    <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                    <button className="bg-green-primary text-white px-4 py-2 rounded-lg hover:bg-green-secondary">
                       <Plus className="h-5 w-5" />
                     </button>
                   </div>
                   <div className="space-y-2">
-                    {selectedTeam.reminders.map((reminder, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
-                      >
-                        <span>{reminder}</span>
-                        <button className="text-red-500 hover:text-red-600">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
+                    {selectedTeam.standUpConfig.reminderTimes.map(
+                      (reminder, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
+                        >
+                          <span>{reminder}</span>
+                          <button className="text-red-500 hover:text-red-600">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               )}

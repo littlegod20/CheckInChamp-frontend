@@ -33,6 +33,7 @@ export interface StandUpConfigTypes {
 }
 
 export interface FormTypes {
+  id?:string;
   name: string;
   members: string[];
   timezone: string;
