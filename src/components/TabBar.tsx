@@ -1,3 +1,4 @@
+import { Tooltip } from "react-tooltip";
 import { TabBarTypes } from "../types/TabBar";
 
 const TabBar: React.FC<TabBarTypes> = ({
@@ -12,6 +13,8 @@ const TabBar: React.FC<TabBarTypes> = ({
         isActive === name.toLowerCase() ? "bg-green-primary font-bold" : ""
       }`}
       onClick={() => onNavigation(name.toLowerCase())}
+      data-tooltip-content={name}
+      data-tooltip-id="my-tooltip"
     >
       {Icon && (
         <div
@@ -21,6 +24,7 @@ const TabBar: React.FC<TabBarTypes> = ({
         </div>
       )}
       <p className="hidden md:block">{name}</p>
+      <Tooltip id="my-tooltip" className="md:hidden" />
     </div>
   );
 };
