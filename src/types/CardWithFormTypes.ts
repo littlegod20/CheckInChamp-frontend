@@ -1,12 +1,5 @@
-import { LucideIcon } from "lucide-react";
 import { ClassNameValue } from "tailwind-merge";
 
-export interface MoreOptions {
-  label: string;
-  path?: string;
-  action?: () => void | ((val: number) => void);
-  Icon?: LucideIcon;
-}
 
 export interface CardWithFormTypes {
   title?: string;

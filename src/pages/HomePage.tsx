@@ -1,7 +1,7 @@
 import Header from "../components/Header";
 import { Button } from "@/components/ui/button";
 import CardWithForm from "@/components/CardWithForm";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -14,6 +14,7 @@ import {
   Line,
 } from "recharts";
 import { ChartBar, Clipboard, Clock, User } from "lucide-react";
+import { api } from "@/services/api";
 
 // Dummy data for demonstration
 const participationData = [
@@ -39,6 +40,14 @@ const HomePage: React.FC = () => {
   const handleModal = () => {
     setIsOpen(!isOpen);
   };
+
+  useEffect(() => {
+    const fetchTeams = async () => {
+      const response = await api.get("/teams");
+      console.log(response.data);
+    };
+    fetchTeams();
+  }, []);
 
   return (
     <div className="text-black-secondary">
