@@ -19,7 +19,7 @@ export interface CardWithFormTypes {
 }
 
 export interface Questions {
-  id?: number;
+  id?: string;
   text: string;
   type: string;
   options: string[];
@@ -33,7 +33,9 @@ export interface StandUpConfigTypes {
 }
 
 export interface FormTypes {
-  id?:string;
+  slackChannelId?: string;
+  _id?: string;
+  id?: string;
   name: string;
   members: string[];
   timezone: string;

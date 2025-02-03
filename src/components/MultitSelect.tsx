@@ -9,6 +9,7 @@ interface MultitSelectProps {
   ) => void;
   selectedValues: string[];
   field: keyof FormTypes | keyof StandUpConfigTypes; // Match parent's type
+  className?: string;
 }
 
 const MultitSelect = ({
@@ -16,6 +17,7 @@ const MultitSelect = ({
   handleSelect,
   selectedValues,
   field,
+  className,
 }: MultitSelectProps) => {
   return (
     <Select
@@ -24,7 +26,7 @@ const MultitSelect = ({
       onChange={(newValue) => handleSelect(newValue, field)}
       value={options.filter((option) => selectedValues.includes(option.value))}
       placeholder={`Select ${field}...`}
-      className="react-select-container"
+      className={`w-full ${className}`}
       classNamePrefix="react-select"
       closeMenuOnSelect={false}
     />

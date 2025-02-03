@@ -18,7 +18,7 @@ interface Answer {
 }
 
 // Set up base URL for your backend API
-const api = axios.create({
+export const api = axios.create({
   baseURL: "http://localhost:5000/api",
 });
 

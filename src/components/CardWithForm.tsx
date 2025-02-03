@@ -57,7 +57,7 @@ const CardWithForm = ({
 
     // Create the new question object with the ID
     const newQuestion: Questions = {
-      id: newId, // Convert to string if needed
+      id: String(newId), // Convert to string if needed
       text: "",
       type: "text",
       options: [],
