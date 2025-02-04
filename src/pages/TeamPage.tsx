@@ -285,18 +285,16 @@ const TeamsPage = () => {
     dispatch(fetchMember());
   }, [dispatch]);
 
-
-
   useEffect(() => {
     // console.log("loading:", loading);
     // console.log("teams:", teams);
     // console.log("members:", members);
-     setAvailableMembers(
-       members.map((item: { id: string; name: string }) => ({
-         id: item.id as string,
-         member: item.name,
-       }))
-     );
+    setAvailableMembers(
+      members.map((item: { id: string; name: string }) => ({
+        id: item.id as string,
+        member: item.name,
+      }))
+    );
   }, [loading, teams, members]);
 
   // Format available members for react-select
@@ -609,25 +607,25 @@ const TeamsPage = () => {
                       </button>
                     </div>
                     {/* Show options input field when type is multiple_choice */}
-                    {newQuestion.type === "multiple-choice" ||
+                    {(newQuestion.type === "multiple-choice" ||
                       newQuestion.type === "radio" ||
                       newQuestion.type === "checkbox" ||
-                      (newQuestion.type === "select" && (
-                        <div className="flex items-center space-x-4">
-                          <input
-                            type="text"
-                            value={newQuestion.options}
-                            onChange={(e) =>
-                              setNewQuestion({
-                                ...newQuestion,
-                                options: e.target.value.split(","),
-                              })
-                            }
-                            placeholder="Add options (comma-separated)"
-                            className="flex-1 p-2 border rounded-lg"
-                          />
-                        </div>
-                      ))}
+                      newQuestion.type === "select") && (
+                      <div className="flex items-center space-x-4">
+                        <input
+                          type="text"
+                          value={newQuestion.options}
+                          onChange={(e) =>
+                            setNewQuestion({
+                              ...newQuestion,
+                              options: e.target.value.split(","),
+                            })
+                          }
+                          placeholder="Add options (comma-separated)"
+                          className="flex-1 p-2 border rounded-lg"
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     {selectedTeam.standUpConfig.questions.map((question) => (
