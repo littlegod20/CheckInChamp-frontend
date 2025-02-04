@@ -192,7 +192,10 @@ const TeamsPage = () => {
             text: newQuestion.text,
             type: newQuestion.type,
             options:
-              newQuestion.type === "multiple_choice"
+              newQuestion.type === "multiple-choice" ||
+              newQuestion.type === "checkbox" ||
+              newQuestion.type === "select" ||
+              newQuestion.type === "radio"
                 ? newQuestion.options.map((item) => item.trim())
                 : [],
           },
