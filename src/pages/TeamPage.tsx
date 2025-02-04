@@ -309,7 +309,7 @@ const TeamsPage = () => {
     }));
 
   return (
-    <div className="p-6 bg-gray-50  text-black-secondary">
+    <div className="p-6 bg-gray-50  text-black-secondary md:h-screen">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -342,7 +342,7 @@ const TeamsPage = () => {
           </div>
 
           {/* List of teams */}
-          <div className="space-y-3 h-screen overflow-y-scroll">
+          <div className="space-y-3 overflow-y-scroll h-96">
             {Array.isArray(teams) &&
               teams
                 .filter((team) =>
