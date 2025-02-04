@@ -12,14 +12,16 @@ import { StandupResponseTypes } from "@/types/StandupResponseTypes";
 
 interface AppState {
   teams: FormTypes[];
-  standups: StandupResponseTypes[];
+  standups: StandupResponseTypes | null;
+  members: { id: string; name: string }[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: AppState = {
   teams: [],
-  standups: [],
+  standups: null,
+  members: [],
   loading: false,
   error: null,
 };
@@ -61,9 +63,15 @@ export const fetchStandups = createAsyncThunk(
   "standups/fetchStandups",
   async () => {
     const response = await axios.get("http://localhost:5000/api/standups");
+    console.log("status:", response.data)
     return response.data;
   }
 );
+
+export const fetchMember = createAsyncThunk("member/fetchMember", async () => {
+  const response = await axios.get("http://localhost:5000/api/members");
+  return response.data.users;
+});
 
 const appSlice = createSlice({
   name: "app",
@@ -111,6 +119,20 @@ const appSlice = createSlice({
       .addCase(fetchStandups.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to fetch standups";
+      })
+
+      // members reducers
+      .addCase(fetchMember.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMember.fulfilled, (state, action) => {
+        state.members = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchMember.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch members";
       });
   },
 });

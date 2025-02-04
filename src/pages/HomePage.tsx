@@ -14,40 +14,133 @@ import {
   Line,
 } from "recharts";
 import { ChartBar, Clipboard, Clock, User } from "lucide-react";
-import { api } from "@/services/api";
-
-// Dummy data for demonstration
-const participationData = [
-  { name: "Mon", participation: 85 },
-  { name: "Tue", participation: 92 },
-  { name: "Wed", participation: 78 },
-  { name: "Thu", participation: 88 },
-  { name: "Fri", participation: 95 },
-  { name: "Sat", participation: 70 },
-  { name: "Sun", participation: 65 },
-];
-
-const standupData = [
-  { name: "Team A", completed: 14, pending: 2 },
-  { name: "Team B", completed: 12, pending: 4 },
-  { name: "Team C", completed: 15, pending: 1 },
-  { name: "Team D", completed: 10, pending: 5 },
-];
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
+import { fetchStandups, fetchTeams } from "@/store/store";
+import { FormTypes } from "@/types/CardWithFormTypes";
+import {
+  calculateOverallParticipationRate,
+  getPendingRemindersCount,
+} from "@/utils/helpers";
+import {
+  StandupResponseTypes,
+  StatusTypes,
+} from "@/types/StandupResponseTypes";
 
 const HomePage: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [todayStandups, setTodayStandup] = useState<number>(0);
+
+  const dispatch = useAppDispatch();
+  const { teams, standups } = useAppSelector((state) => state.app);
 
   const handleModal = () => {
     setIsOpen(!isOpen);
   };
 
+  // sorting standups by date (most recent first)
+  const sortedStandups = standups?.statuses
+    ? [...standups.statuses].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      )
+    : [];
+
+  const getTodayStandups = (teams: Array<FormTypes>) => {
+    const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+    const todayStandups = teams.filter((team) =>
+      team.standUpConfig?.standUpDays?.includes(today)
+    );
+    setTodayStandup(todayStandups.length);
+  };
+
+  const getParticipationDataForTeam = (
+    teamId: string,
+    standups: StandupResponseTypes
+  ) => {
+    // Filter standups for the given team and exclude errors
+    const teamStandups = standups.statuses
+      .filter((item) => item.slackChannelId === teamId && !item.error)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    console.log("teamsStandups:", teamStandups);
+
+    // Map each standup to an object containing a formatted date and a numerical participation rate
+    return teamStandups.map((item) => ({
+      name: new Date(item.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      participation: parseFloat(item.participationRate.replace("%", "")),
+    }));
+  };
+
+  const getStandupCompletionData = (
+    teams: FormTypes[],
+    standups: StatusTypes[] = []
+  ) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize today's date
+
+    return teams
+      .filter(
+        (item) =>
+          item.name !== "all-check-in-champ" &&
+          item.name !== "new-channel" &&
+          item.name !== "social"
+      )
+      .splice(0, 4)
+      .map((team) => {
+        // Get standups for this team that are valid (i.e., no error)
+        const teamStandups = standups.filter(
+          (standup) =>
+            standup.slackChannelId === team.slackChannelId && !standup.error
+        );
+
+        // Count completed and pending standups
+        let completed = 0;
+        let pending = 0;
+        teamStandups.forEach((standup) => {
+          const standupDate = new Date(standup.date);
+          standupDate.setHours(0, 0, 0, 0); // Normalize standup date
+          if (standupDate < today) {
+            completed++;
+          } else {
+            pending++;
+          }
+        });
+
+        return {
+          name: team.name.split("-").join(" "), // or any display name for the team
+          completed,
+          pending,
+        };
+      });
+  };
+
+  // Example usage:
+  const standupData = standups
+    ? getStandupCompletionData(teams, standups?.statuses as StatusTypes[])
+    : [];
+
+  console.log("standupDAta:", standups);
+
+  const participationData =
+    sortedStandups.length > 0
+      ? getParticipationDataForTeam(
+          sortedStandups[0].slackChannelId,
+          standups as StandupResponseTypes
+        )
+      : [];
+
   useEffect(() => {
-    const fetchTeams = async () => {
-      const response = await api.get("/teams");
-      console.log(response.data);
-    };
-    fetchTeams();
-  }, []);
+    dispatch(fetchTeams());
+    dispatch(fetchStandups());
+  }, [dispatch]);
+
+  useEffect(() => {
+    getTodayStandups(teams);
+  }, [teams]);
+
+  const pendingRemindersCount = getPendingRemindersCount(teams);
 
   return (
     <div className="text-black-secondary">
@@ -72,7 +165,7 @@ const HomePage: React.FC = () => {
               <User className="h-8 w-8 text-blue-500 mr-3" />
               <div>
                 <p className="text-gray-500 text-sm">Total Teams</p>
-                <p className="text-2xl font-bold">24</p>
+                <p className="text-2xl font-bold">{teams.length}</p>
               </div>
             </div>
           </div>
@@ -83,7 +176,7 @@ const HomePage: React.FC = () => {
               <Clipboard className="h-8 w-8 text-green-500 mr-3" />
               <div>
                 <p className="text-gray-500 text-sm">Standups Today</p>
-                <p className="text-2xl font-bold">58/62</p>
+                <p className="text-2xl font-bold">{todayStandups}</p>
               </div>
             </div>
           </div>
@@ -93,8 +186,14 @@ const HomePage: React.FC = () => {
             <div className="flex items-center">
               <ChartBar className="h-8 w-8 text-purple-500 mr-3" />
               <div>
-                <p className="text-gray-500 text-sm">Participation Rate</p>
-                <p className="text-2xl font-bold">93.5%</p>
+                <p className="text-gray-500 text-sm">
+                  Overall Participation Rate
+                </p>
+                <p className="text-2xl font-bold">
+                  {standups
+                    ? calculateOverallParticipationRate(standups.statuses)
+                    : null}
+                </p>
               </div>
             </div>
           </div>
@@ -105,7 +204,7 @@ const HomePage: React.FC = () => {
               <Clock className="h-8 w-8 text-yellow-500 mr-3" />
               <div>
                 <p className="text-gray-500 text-sm">Pending Reminders</p>
-                <p className="text-2xl font-bold">14</p>
+                <p className="text-2xl font-bold">{pendingRemindersCount}</p>
               </div>
             </div>
           </div>
@@ -115,11 +214,19 @@ const HomePage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Participation Trends */}
           <div className="bg-white p-6 rounded-xl shadow-sm">
-            <h3 className="text-lg font-semibold mb-4">Participation Trends</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {sortedStandups.length > 0
+                ? sortedStandups[0].teamName
+                    .split("-")
+                    .join(" ")
+                    .toUpperCase() + " Participation Trends"
+                : "Participation Trends"}
+            </h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={participationData}>
                   <CartesianGrid strokeDasharray="3 3" />
+
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
@@ -166,18 +273,55 @@ const HomePage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {[1, 2, 3, 4, 5].map((item) => (
-                  <tr key={item} className="border-b last:border-b-0">
-                    <td className="py-3">Team {item}</td>
-                    <td className="py-3">2023-08-{10 + item} 09:00</td>
-                    <td className="py-3">8/10</td>
-                    <td className="py-3">
-                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                        Completed
-                      </span>
+                {sortedStandups.length > 0 ? (
+                  sortedStandups
+                    .filter((item) => !item.error)
+                    .map((item, index) => {
+                      const standupDate = new Date(item.date);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0); // Normalize today's date (remove time part)
+
+                      const status =
+                        standupDate < today ? "Completed" : "Pending";
+                      const statusClasses =
+                        status === "Completed"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800";
+
+                      return (
+                        <tr key={index} className="border-b last:border-b-0">
+                          <td className="py-3">{item.teamName}</td>
+                          <td className="py-3">
+                            {new Date(item.date).toISOString().split("T")[0]}
+                          </td>
+                          <td className="py-3">
+                            {teams.map((team) =>
+                              team.slackChannelId === item.slackChannelId
+                                ? item.status.filter(
+                                    (i) => i.status === "responded"
+                                  ).length +
+                                  "/" +
+                                  team.members.length
+                                : null
+                            )}
+                          </td>
+                          <td className="py-3">
+                            <span
+                              className={`px-2 py-1 rounded-full text-sm ${statusClasses}`}
+                            >
+                              {status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                ) : (
+                  <tr>
+                    <td>
+                      <p>No recent standups available</p>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

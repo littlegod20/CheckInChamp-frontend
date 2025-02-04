@@ -7,6 +7,7 @@ import MainLayout from "./layout";
 import StandupsPage from "./pages/StandupPage";
 import MoodTrackingPage from "./pages/MoodTracking";
 import MasterAnalyticsPage from "./pages/MasterAnalytics";
+import StandupDetailsPage from "./pages/StandupDetailsPage";
 
 const App: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const App: React.FC = () => {
           <Route index element={<HomePage />} />
           <Route path="/teams/" element={<ManageTeam />} />
           <Route path="/standups/" element={<StandupsPage />} />
+          <Route path="/standups/:id" element={<StandupDetailsPage />} />
           <Route path="/mood tracking" element={<MoodTrackingPage />} />
           <Route path="/master analytics" element={<MasterAnalyticsPage />} />
         </Route>
