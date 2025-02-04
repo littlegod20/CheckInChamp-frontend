@@ -1,4 +1,5 @@
-import{ useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -24,100 +25,122 @@ ChartJS.register(
 );
 
 interface MoodEntry {
-  id: string;
+  userId: string;
   date: string;
-  team: string;
-  member: string;
+  teamName: string;
+  userName: string;
   mood: "happy" | "neutral" | "sad";
 }
 
 const MoodTrackingPage = () => {
   const [selectedTeam, setSelectedTeam] = useState<string>("All Teams");
   const [selectedMember, setSelectedMember] = useState<string>("All Members");
+  const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
+  const [teams, setTeams] = useState<string[]>([]);
+  const [members, setMembers] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Dummy data
-  const moodEntries: MoodEntry[] = [
-    {
-      id: "1",
-      date: "2023-10-01",
-      team: "Engineering Team",
-      member: "Alice",
-      mood: "happy",
-    },
-    {
-      id: "2",
-      date: "2023-10-01",
-      team: "Engineering Team",
-      member: "Bob",
-      mood: "neutral",
-    },
-    {
-      id: "3",
-      date: "2023-10-02",
-      team: "Design Team",
-      member: "Charlie",
-      mood: "sad",
-    },
-    {
-      id: "4",
-      date: "2023-10-02",
-      team: "Marketing Team",
-      member: "Diana",
-      mood: "happy",
-    },
-    {
-      id: "5",
-      date: "2023-10-03",
-      team: "Engineering Team",
-      member: "Alice",
-      mood: "neutral",
-    },
-  ];
+  // Fetch mood data from the backend
+  useEffect(() => {
+    const fetchMoodData = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/mood/", {
+          params: {
+            teamName: selectedTeam === "All Teams" ? undefined : selectedTeam,
+            userName:
+              selectedMember === "All Members" ? undefined : selectedMember,
+          },
+        });
+
+        const { data } = response.data;
+
+        console.log("mood data:", data);
+
+        // Transform backend data to match frontend format
+        const transformedData = data.map((entry: MoodEntry) => ({
+          date: new Date(entry.date).toISOString().split("T")[0],
+          teamName: entry.teamName,
+          userName: entry.userName,
+          mood: entry.mood,
+          userId: entry.userId,
+        }));
+
+        setMoodEntries(transformedData);
+
+        // Extract unique teams and members
+        const uniqueTeams = Array.from(
+          new Set(transformedData.map((entry: MoodEntry) => entry.teamName))
+        ) as string[];
+        const uniqueMembers = Array.from(
+          new Set(transformedData.map((entry: MoodEntry) => entry.userName))
+        );
+
+        setTeams(["All Teams", ...uniqueTeams]);
+        setMembers(["All Members", ...(uniqueMembers as string[])]);
+      } catch (error) {
+        console.error("Error fetching mood data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMoodData();
+  }, [selectedTeam, selectedMember]);
 
   // Filtered mood entries
   const filteredMoodEntries = moodEntries.filter((entry) => {
+    // console.log("entry.teamName:", entry.teamName);
     const teamMatch =
-      selectedTeam === "All Teams" || entry.team === selectedTeam;
+      selectedTeam === "All Teams" || entry.teamName === selectedTeam;
     const memberMatch =
-      selectedMember === "All Members" || entry.member === selectedMember;
+      selectedMember === "All Members" || entry.userName === selectedMember;
+    console.log("selectedMember:", selectedMember);
     return teamMatch && memberMatch;
   });
 
-  // Teams for filter dropdown
-  const teams = [
-    "All Teams",
-    "Engineering Team",
-    "Design Team",
-    "Marketing Team",
-  ];
-
-  // Members for filter dropdown
-  const members = ["All Members", "Alice", "Bob", "Charlie", "Diana"];
-
   // Mood trends data for the chart
   const moodTrendsData = {
-    labels: ["2023-10-01", "2023-10-02", "2023-10-03"],
+    labels: Array.from(new Set(moodEntries.map((entry) => entry.date))), // Unique dates
     datasets: [
       {
         label: "Happy",
-        data: [2, 1, 1], // Number of happy moods per day
+        data: moodEntries
+          .filter((entry) => entry.mood === "happy")
+          .reduce((acc, entry) => {
+            acc[entry.date] = (acc[entry.date] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>),
         borderColor: "#10B981",
         backgroundColor: "#10B981",
       },
       {
         label: "Neutral",
-        data: [1, 0, 1], // Number of neutral moods per day
+        data: moodEntries
+          .filter((entry) => entry.mood === "neutral")
+          .reduce((acc, entry) => {
+            acc[entry.date] = (acc[entry.date] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>),
         borderColor: "#F59E0B",
         backgroundColor: "#F59E0B",
       },
       {
         label: "Sad",
-        data: [0, 1, 0], // Number of sad moods per day
+        data: moodEntries
+          .filter((entry) => entry.mood === "sad")
+          .reduce((acc, entry) => {
+            acc[entry.date] = (acc[entry.date] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>),
         borderColor: "#EF4444",
         backgroundColor: "#EF4444",
       },
     ],
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
@@ -211,16 +234,16 @@ const MoodTrackingPage = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredMoodEntries.map((entry) => (
-              <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+            {filteredMoodEntries.map((entry, index) => (
+              <tr key={index} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {entry.date}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {entry.team}
+                  {entry.teamName}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {entry.member}
+                  {entry.userName}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {entry.mood === "happy" && (
