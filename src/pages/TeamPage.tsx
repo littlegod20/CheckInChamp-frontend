@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 import { MultiValue } from "react-select";
 import { useAppDispatch, useAppSelector } from "../hooks/hooks";
 import { fetchTeams, fetchMember } from "../store/store";
+import Header from "@/components/Header";
+import { Button } from "@/components/ui/button";
 
 const TeamsPage = () => {
   const [selectedTeam, setSelectedTeam] = useState<FormTypes | null>(null);
@@ -387,22 +389,20 @@ const TeamsPage = () => {
   return (
     <div className="p-6 bg-gray-50  text-black-secondary md:h-screen">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Teams Management</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your teams and their configurations
-          </p>
-        </div>
-        <button
-          // onClick={handleAddTeam}
-          className="bg-green-primary text-white px-4 py-2 rounded-lg hover:bg-green-primary flex items-center"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          New Team
-        </button>
-      </div>
 
+      <Header
+        title="Teams Management"
+        description="Manage your teams and their configurations"
+        Button={
+          <Button
+            // onClick={handleAddTeam}
+            className="bg-green-primary text-white hover:bg-green-secondary flex items-center"
+          >
+            <Plus size={30}/>
+            New Team
+          </Button>
+        }
+      />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Team List */}
         <div className="bg-white rounded-xl shadow-sm p-6">

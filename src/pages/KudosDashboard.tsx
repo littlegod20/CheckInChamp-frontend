@@ -77,7 +77,7 @@ const KudosDashboard = () => {
   // Display only a limited number of kudos
   const visibleKudos = filteredKudos.slice(0, visibleCount);
   return (
-    <div className="flex text-black-primary w-full flex-col p-4 bg-white">
+    <div className="flex text-black-primary w-full flex-col p-4 ">
       {/* <div className="bg-white "> */}
       <h2 className="dashboard-title">Kudos Dashboard</h2>
 

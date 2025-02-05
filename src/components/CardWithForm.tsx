@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import {
   CardWithFormTypes,
   FormTypes,
@@ -29,23 +29,27 @@ import { daysOfWeek, times12hr, timezones } from "@/utils/staticDropdowns";
 import { createTeam } from "@/services/api";
 import axios from "axios";
 
+
+const initialForm: FormTypes = {
+  name: "",
+  members: [],
+  timezone: "",
+  standUpConfig: {
+    questions: [],
+    reminderTimes: [],
+    standUpDays: [],
+    standUpTimes: [],
+  },
+};
+
 const CardWithForm = ({
   title,
   description,
   className,
   onCancel,
 }: CardWithFormTypes) => {
-  const [form, setForm] = useState<FormTypes>({
-    name: "",
-    members: [],
-    timezone: "",
-    standUpConfig: {
-      questions: [],
-      reminderTimes: [],
-      standUpDays: [],
-      standUpTimes: [],
-    },
-  });
+  const [form, setForm] = useState<FormTypes>(initialForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [availableMembers, setAvailableMembers] = useState<
     { id: string; name: string }[]
@@ -162,17 +166,20 @@ const CardWithForm = ({
     label: reminder,
   }));
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    console.log(form);
-    try {
-      const response = await createTeam(form);
-      console.log("response", response.data);
-    } catch (err) {
-      console.error(`Error submitting form`, err);
-    }
-    // Submit form data to backend
-  };
+   const handleSubmit = async (event: React.FormEvent) => {
+     event.preventDefault();
+     setIsSubmitting(true); // Start loading
+
+     try {
+       const response = await createTeam(form);
+       console.log("response", response.data);
+       setForm(initialForm); // Reset form on success
+     } catch (err) {
+       console.error(`Error submitting form`, err);
+     } finally {
+       setIsSubmitting(false); // End loading regardless of success/failure
+     }
+   };
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -364,8 +371,13 @@ const CardWithForm = ({
                   type="submit"
                   variant="default"
                   className="py-6 px-8 hover:bg-green-primary bg-green-secondary"
+                  disabled={isSubmitting}
                 >
-                  Submit
+                  {isSubmitting ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    "Submit"
+                  )}
                 </Button>
                 <Button
                   className="py-6 px-8 text-red-600 bg-opacity-25 hover:text-red-600 bg-red-100"
