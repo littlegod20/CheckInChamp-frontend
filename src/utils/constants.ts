@@ -33,4 +33,5 @@ export const tabs = [
     name: "Master Analytics",
     Icon: Cpu,
   },
+
 ];

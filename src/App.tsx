@@ -8,6 +8,9 @@ import StandupsPage from "./pages/StandupPage";
 import MoodTrackingPage from "./pages/MoodTracking";
 import MasterAnalyticsPage from "./pages/MasterAnalytics";
 import StandupDetailsPage from "./pages/StandupDetailsPage";
+import KudosDashboard from "./pages/KudosDashboard";
+import KudosHistory from "./pages/KudosHistory";
+import Leaderboard from "./pages/Leaderboard";
 
 const App: React.FC = () => {
   return (
@@ -20,6 +23,9 @@ const App: React.FC = () => {
           <Route path="/standups/:id" element={<StandupDetailsPage />} />
           <Route path="/mood tracking" element={<MoodTrackingPage />} />
           <Route path="/master analytics" element={<MasterAnalyticsPage />} />
+          <Route path="/kudos-history" element={<KudosHistory />} />
+          <Route path="/kudos" element={<KudosDashboard />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
         </Route>
       </Routes>
     </BrowserRouter>
