@@ -12,7 +12,7 @@ import { fetchTeams, fetchMember } from "../store/store";
 const TeamsPage = () => {
   const [selectedTeam, setSelectedTeam] = useState<FormTypes | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "members" | "schedule" | "questions" | "reminders"
+    "members" | "schedule" | "questions" | "reminders" | "moods"
   >("members");
 
   const dispatch = useAppDispatch();
@@ -30,6 +30,10 @@ const TeamsPage = () => {
     "loading" | "failed" | "success" | "idle"
   >("idle");
 
+  const [moodTime, setMoodTime] = useState("");
+  const [savedMoodTime, setSavedMoodTime] = useState("");
+  const [moodMsg, setMoodMsg] = useState("");
+
   const [newSchedule, setNewSchedule] = useState({ day: "", time: "" });
   const [newReminder, setNewReminder] = useState("");
   const [newQuestion, setNewQuestion] = useState<Questions>({
@@ -37,6 +41,71 @@ const TeamsPage = () => {
     type: "",
     options: [],
   });
+
+  // handle add mood check in time
+  const handleAddMoodTime = async () => {
+    if (!selectedTeam || !moodTime) {
+      alert("Please select a team and enter a mood time.");
+      return;
+    }
+
+    try {
+      const to12Hour = convertTo12Hour(moodTime);
+
+      const response = await api.post("/mood", {
+        teamName: selectedTeam.name,
+        slackChannelId: selectedTeam.slackChannelId,
+        moodTime: to12Hour,
+      });
+
+      // setMoodMsg(response.data.message);
+
+      if (!response) {
+        throw new Error(response);
+      }
+
+      if (response.status === 201) {
+        alert("Mood time saved successfully!");
+        setSavedMoodTime(response.data.data.moodTime); // Save the mood time
+        setMoodTime(""); // Clear the input field
+      } else {
+        alert("Failed to save mood time.");
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      // console.error(
+      //   "Error saving mood time:",
+      //   error instanceof Error ? error.response.data.message : error
+      // );
+      setMoodMsg(error?.response?.data.message as string);
+    }
+  };
+
+  const handleDeleteMoodTime = async () => {
+    if (!selectedTeam) {
+      alert("Please select a team.");
+      return;
+    }
+
+    try {
+      const response = await api.delete("/mood", {
+        data: {
+          teamName: selectedTeam.name,
+          slackChannelId: selectedTeam.slackChannelId,
+        },
+      });
+
+      if (response.status === 200) {
+        alert("Mood time deleted successfully!");
+        setSavedMoodTime(""); // Clear the saved mood time
+      } else {
+        alert("Failed to delete mood time.");
+      }
+    } catch (error) {
+      console.error("Error deleting mood time:", error);
+      alert("Error deleting mood time.");
+    }
+  };
 
   // Handle member selection from Multiselect
   const handleMemberSelect = (
@@ -289,16 +358,23 @@ const TeamsPage = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    // console.log("loading:", loading);
-    // console.log("teams:", teams);
-    // console.log("members:", members);
+    const fetchMoodTimes = async () => {
+      const response = await api.get("mood/times");
+      console.log("MoodTimes:", response.data.data[0]);
+      setSavedMoodTime(response.data.data[0]?.moodTime);
+    };
+
     setAvailableMembers(
       members.map((item: { id: string; name: string }) => ({
         id: item.id as string,
         member: item.name,
       }))
     );
+
+    fetchMoodTimes();
   }, [loading, teams, members]);
+
+  console.log("savedMoodTime", savedMoodTime);
 
   // Format available members for react-select
   const memberOptions =
@@ -410,22 +486,28 @@ const TeamsPage = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex space-x-4 border-b mb-6">
-              {(["members", "schedule", "questions", "reminders"] as const).map(
-                (tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`pb-2 px-4 ${
-                      activeTab === tab
-                        ? "border-b-2 border-green-primary text-green-secondary"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                  >
-                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  </button>
-                )
-              )}
+            <div className="flex space-x-4 border-b mb-6 ">
+              {(
+                [
+                  "members",
+                  "schedule",
+                  "questions",
+                  "reminders",
+                  "moods",
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`pb-2 px-4 ${
+                    activeTab === tab
+                      ? "border-b-2 border-green-primary text-green-secondary"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
             </div>
 
             {/* Tab Content */}
@@ -690,6 +772,48 @@ const TeamsPage = () => {
                         </div>
                       )
                     )}
+                  </div>
+                </div>
+              )}
+
+              {/* mood checkin tab */}
+              {activeTab === "moods" && (
+                <div className="space-y-4">
+                  {/* Mood Time Input */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 w-1/2">
+                      <input
+                        type="time"
+                        value={moodTime}
+                        onChange={(e) => setMoodTime(e.target.value)}
+                        className="p-2 border rounded-lg"
+                      />
+                      <button
+                        onClick={handleAddMoodTime}
+                        className="bg-green-primary text-white px-4 py-2 rounded-lg hover:bg-green-secondary"
+                      >
+                        <Plus className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Display Saved Mood Time */}
+                  <div>
+                    <p className="text-sm font-bold">Mood Check-In Time:</p>
+                    {savedMoodTime ? (
+                      <div className="flex items-center gap-2">
+                        <p>{savedMoodTime}</p>
+                        <button
+                          onClick={handleDeleteMoodTime}
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <p>Not set</p>
+                    )}
+                    <p className="text-xs text-red-600">{moodMsg}</p>
                   </div>
                 </div>
               )}
