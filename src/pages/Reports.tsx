@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
-import { getStandupResponses, getTeamsOnly} from '../../services/api';
+import { getStandupResponses, getTeamsOnly} from '../services/api';
 import '../styles/Reports.css';
 
 interface Team {

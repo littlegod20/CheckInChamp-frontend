@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import CreateTeamPage from './components/pages/CreateTeam';
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
   { path: '/kudos-dashboard', element: <KudosDashboard /> },
   { path: '/leaderboard', element: <Leaderboard /> },
   { path: '*', element: <NotFoundPage /> },
+
 ]);
 
 
