@@ -72,7 +72,7 @@ const CustomHeatmap = ({ xLabels, yLabels, data }: HeatmapProps) => {
             <div key={y} className="flex mb-2">
               {/* Y-axis label */}
               <div className="w-32 pr-2">
-                <div className="text-xs text-gray-600 truncate">{yLabel}</div>
+                <div className="text-xs text-gray-600 truncate uppercase font-bold">{yLabel}</div>
               </div>
 
               {/* Grid cells */}
