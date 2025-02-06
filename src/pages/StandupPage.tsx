@@ -1,3 +1,4 @@
+import Header from "@/components/Header";
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
 import { fetchMember, fetchStandups, fetchTeams } from "@/store/store";
 import { FormTypes } from "@/types/CardWithFormTypes";
@@ -107,15 +108,13 @@ const StandupsPage = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Standups</h1>
-        <p className="text-gray-600 mt-2">
-          View and manage all standups across teams
-        </p>
-      </div>
+      <Header
+        title="Standups"
+        description=" View and manage all standups across teams"
+      />
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col md:flex-row gap-4 mb-6 pt-4">
         {/* Team Filter */}
         <div className="flex-1">
           <label
