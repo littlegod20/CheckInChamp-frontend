@@ -99,6 +99,14 @@ const StandupDetailsPage = () => {
     saveAs(blob, `standup-${standup.teamName}-${standup.date}.json`);
   };
 
+  console.log(
+    "standup:",
+    new Date(standup.date).setHours(0, 0, 0, 0) <=
+      new Date().setHours(0, 0, 0, 0)
+  );
+  console.log("standup date:", new Date(standup.date).setHours(0, 0, 0, 0));
+  console.log("today date:", new Date().setHours(0, 0, 0, 0));
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
       <Header
@@ -149,12 +157,16 @@ const StandupDetailsPage = () => {
             <p className="text-gray-600">Status:</p>
             <p
               className={`px-2 py-1 text-xs font-semibold rounded-full w-24 flex justify-center items-center ${
-                new Date(standup.date) < new Date()
+                new Date(standup.date).setHours(0, 0, 0, 0) <
+                new Date().setHours(0, 0, 0, 0)
                   ? "bg-green-100 text-green-800"
                   : "bg-yellow-100 text-yellow-800"
               }`}
             >
-              {new Date(standup.date) < new Date() ? "Completed" : "Pending"}
+              {new Date(standup.date).setHours(0, 0, 0, 0) <
+              new Date().setHours(0, 0, 0, 0)
+                ? "Completed"
+                : "Pending"}
             </p>
           </div>
         </div>
