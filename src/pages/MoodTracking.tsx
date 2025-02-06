@@ -13,6 +13,7 @@ import {
 import { Bar, Line } from "react-chartjs-2";
 import { FrownIcon, MehIcon, SmileIcon } from "lucide-react";
 import CustomHeatmap from "@/components/CustomHeatMap";
+import Header from "@/components/Header";
 
 // Register Chart.js components
 ChartJS.register(
@@ -39,8 +40,6 @@ type HeatmapCell = {
   value: number;
   mood: "happy" | "neutral" | "sad";
 };
-
-
 
 const MoodTrackingPage = () => {
   const [selectedTeam, setSelectedTeam] = useState<string>("All Teams");
@@ -348,15 +347,13 @@ const MoodTrackingPage = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Mood Tracking</h1>
-        <p className="text-gray-600 mt-2">
-          Track and analyze team moods over time
-        </p>
-      </div>
+      <Header
+        title="Mood Tracking"
+        description="Track and analyze team moods over time"
+      />
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col md:flex-row gap-4 mb-6 pt-4">
         {/* Team Filter */}
         <div className="flex-1">
           <label
