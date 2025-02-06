@@ -47,7 +47,7 @@ const MoodTrackingPage = () => {
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
   const [teams, setTeams] = useState<string[]>([]);
   const [members, setMembers] = useState<string[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // const [loading, setLoading] = useState<boolean>(true);
 
   // Fetch mood data from the backend
   useEffect(() => {
@@ -88,9 +88,10 @@ const MoodTrackingPage = () => {
         setMembers(["All Members", ...(uniqueMembers as string[])]);
       } catch (error) {
         console.error("Error fetching mood data:", error);
-      } finally {
-        setLoading(false);
       }
+      // finally {
+      //   setLoading(false);
+      // }
     };
 
     fetchMoodData();
@@ -147,9 +148,9 @@ const MoodTrackingPage = () => {
     ],
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  // if (loading) {
+  //   return <div>Loading...</div>;
+  // }
 
   // Determine chart type based on filters
   const getChartType = () => {
