@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { getKudos, getKudosLeaderboard } from "../services/api";
 import { format } from "date-fns";
 import "../styles/KudosDashboard.css";
+import Header from "@/components/Header";
 
 interface Kudos {
   _id: string;
@@ -77,12 +78,12 @@ const KudosDashboard = () => {
   // Display only a limited number of kudos
   const visibleKudos = filteredKudos.slice(0, visibleCount);
   return (
-    <div className="flex text-black-primary w-full flex-col p-4 ">
+    <div className="flex text-black-primary w-full flex-col p-6 ">
       {/* <div className="bg-white "> */}
-      <h2 className="dashboard-title">Kudos Dashboard</h2>
+      <Header title="Kudos Dashboard" description="View all kudos given here" />
 
       {/* 🏆 Kudos Leaderboard */}
-      <div className="leaderboard-section">
+      <div className="leaderboard-section pt-5">
         <h3 className="section-title">🏆 Kudos Leaderboard</h3>
         <table className="table">
           <thead>
