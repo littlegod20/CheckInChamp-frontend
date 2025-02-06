@@ -15,7 +15,7 @@ const Navbar: React.FC = () => {
       navigate("/");
       return;
     }
-     navigate(`${val}`);
+    navigate(`${val}`);
   };
 
   useEffect(() => {

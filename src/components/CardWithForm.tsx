@@ -25,10 +25,13 @@ import {
 } from "./ui/select";
 import { Label } from "./ui/label";
 import MultitSelect from "./MultitSelect";
-import { daysOfWeek, times12hr, timezones } from "@/utils/staticDropdowns";
+import {
+  daysOfWeek,
+  times12hr,
+  timezones,
+} from "../utils/staticDropdowns";
 import { createTeam } from "@/services/api";
 import axios from "axios";
-
 
 const initialForm: FormTypes = {
   name: "",
@@ -166,20 +169,20 @@ const CardWithForm = ({
     label: reminder,
   }));
 
-   const handleSubmit = async (event: React.FormEvent) => {
-     event.preventDefault();
-     setIsSubmitting(true); // Start loading
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsSubmitting(true); // Start loading
 
-     try {
-       const response = await createTeam(form);
-       console.log("response", response.data);
-       setForm(initialForm); // Reset form on success
-     } catch (err) {
-       console.error(`Error submitting form`, err);
-     } finally {
-       setIsSubmitting(false); // End loading regardless of success/failure
-     }
-   };
+    try {
+      const response = await createTeam(form);
+      console.log("response", response.data);
+      setForm(initialForm); // Reset form on success
+    } catch (err) {
+      console.error(`Error submitting form`, err);
+    } finally {
+      setIsSubmitting(false); // End loading regardless of success/failure
+    }
+  };
 
   useEffect(() => {
     const fetchMembers = async () => {

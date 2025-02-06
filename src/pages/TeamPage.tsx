@@ -398,7 +398,7 @@ const TeamsPage = () => {
             // onClick={handleAddTeam}
             className="bg-green-primary text-white hover:bg-green-secondary flex items-center"
           >
-            <Plus size={30}/>
+            <Plus size={30} />
             New Team
           </Button>
         }

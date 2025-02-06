@@ -10,8 +10,9 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 import { FrownIcon, MehIcon, SmileIcon } from "lucide-react";
+import CustomHeatmap from "@/components/CustomHeatMap";
 
 // Register Chart.js components
 ChartJS.register(
@@ -31,6 +32,15 @@ interface MoodEntry {
   userName: string;
   mood: "happy" | "neutral" | "sad";
 }
+
+type HeatmapCell = {
+  x: number;
+  y: number;
+  value: number;
+  mood: "happy" | "neutral" | "sad";
+};
+
+
 
 const MoodTrackingPage = () => {
   const [selectedTeam, setSelectedTeam] = useState<string>("All Teams");
@@ -142,6 +152,199 @@ const MoodTrackingPage = () => {
     return <div>Loading...</div>;
   }
 
+  // Determine chart type based on filters
+  const getChartType = () => {
+    if (selectedTeam !== "All Teams" && selectedMember === "All Members") {
+      return "teamArea";
+    } else if (
+      selectedTeam !== "All Teams" &&
+      selectedMember !== "All Members"
+    ) {
+      return "memberArea";
+    } else if (
+      selectedTeam === "All Teams" &&
+      selectedMember !== "All Members"
+    ) {
+      return "memberHeatmap";
+    }
+    return "default";
+  };
+
+  // Generate data for team area chart
+  const getTeamAreaData = () => {
+    const dates = Array.from(
+      new Set(filteredMoodEntries.map((e) => e.date))
+    ).sort();
+
+    return {
+      labels: dates,
+      datasets: ["happy", "neutral", "sad"].map((mood) => ({
+        label: mood,
+        data: dates.map(
+          (date) =>
+            filteredMoodEntries.filter(
+              (e) => e.date === date && e.mood === mood
+            ).length
+        ),
+        fill: true,
+        backgroundColor: {
+          happy: "#10B98130",
+          neutral: "#F59E0B30",
+          sad: "#EF444430",
+        }[mood],
+        borderColor: {
+          happy: "#10B981",
+          neutral: "#F59E0B",
+          sad: "#EF4444",
+        }[mood],
+      })),
+    };
+  };
+
+  // Generate data for member area chart
+  const getMemberAreaData = () => {
+    const dates = Array.from(
+      new Set(filteredMoodEntries.map((e) => e.date))
+    ).sort();
+    const moodValues = { happy: 2, neutral: 1, sad: 0 };
+
+    return {
+      labels: dates,
+      datasets: [
+        {
+          label: "Mood Level",
+          data: dates.map((date) => {
+            const entry = filteredMoodEntries.find((e) => e.date === date);
+            return entry ? moodValues[entry.mood] : null;
+          }),
+          fill: true,
+          backgroundColor: "#3B82F630",
+          borderColor: "#3B82F6",
+        },
+      ],
+    };
+  };
+
+  // Generate data for member heatmap
+  const getMemberHeatmapData = () => {
+    const entries = filteredMoodEntries.filter(
+      (e) => e.userName === selectedMember
+    );
+
+    console.log("entries:", entries);
+
+    // Ensure we have at least one entry
+    if (entries.length === 0) {
+      return {
+        data: [],
+        xLabels: [],
+        yLabels: [],
+      };
+    }
+
+    const dates = Array.from(new Set(entries.map((e) => e.date))).sort();
+    const teams = Array.from(new Set(entries.map((e) => e.teamName))).sort();
+
+    const data: HeatmapCell[] = [];
+
+    teams.forEach((team, yIndex) => {
+      dates.forEach((date, xIndex) => {
+        const entry = entries.find(
+          (e) => e.teamName === team && e.date === date
+        );
+
+        if (entry) {
+          data.push({
+            x: xIndex,
+            y: yIndex,
+            value: { happy: 2, neutral: 1, sad: 0 }[entry.mood],
+            mood: entry.mood,
+          });
+        }
+      });
+    });
+
+    return {
+      data,
+      xLabels: dates.length > 0 ? dates : ["No dates"],
+      yLabels: teams.length > 0 ? teams : ["No teams"],
+    };
+  };
+
+  // Render appropriate chart
+  const renderChart = () => {
+    const chartType = getChartType();
+
+    switch (chartType) {
+      case "teamArea":
+        return (
+          <Line
+            data={getTeamAreaData()}
+            options={{
+              responsive: true,
+              elements: { line: { tension: 0.4 } },
+              plugins: { legend: { position: "top" } },
+            }}
+          />
+        );
+
+      case "memberArea":
+        return (
+          <Line
+            data={getMemberAreaData()}
+            options={{
+              responsive: true,
+              scales: {
+                y: {
+                  min: 0,
+                  max: 2,
+                  ticks: {
+                    callback: (value) =>
+                      ["Sad", "Neutral", "Happy"][value as number],
+                  },
+                },
+              },
+              plugins: { legend: { display: false } },
+            }}
+          />
+        );
+
+      case "memberHeatmap": {
+        const { data, xLabels, yLabels } = getMemberHeatmapData();
+        console.log("Heatmap Data:", {
+          data,
+          xLabels,
+          yLabels,
+          dataLength: data.length,
+          xLabelsLength: xLabels.length,
+          yLabelsLength: yLabels.length,
+        });
+        return (
+          <div className="">
+            {data.length > 0 ? (
+              <CustomHeatmap xLabels={xLabels} yLabels={yLabels} data={data} />
+            ) : (
+              <div className="text-center py-6 text-gray-500">
+                No mood data available for this member across teams.
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      default:
+        return (
+          <Bar
+            data={moodTrendsData}
+            options={{
+              responsive: true,
+              plugins: { legend: { position: "top" } },
+            }}
+          />
+        );
+    }
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
       {/* Header */}
@@ -199,19 +402,16 @@ const MoodTrackingPage = () => {
         </div>
       </div>
 
-      {/* Mood Trends Chart */}
+      {/* Updated Chart Section */}
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Mood Trends</h2>
-        <Line
-          data={moodTrendsData}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: { position: "top" },
-              title: { display: false },
-            },
-          }}
-        />
+        <h2 className="text-lg font-semibold mb-4">
+          {getChartType() === "memberHeatmap"
+            ? "Mood Distribution Across Teams"
+            : "Mood Trends"}
+        </h2>
+        <div className="chart-container" style={{ minHeight: "400px" }}>
+          {renderChart()}
+        </div>
       </div>
 
       {/* Mood Entries Table */}

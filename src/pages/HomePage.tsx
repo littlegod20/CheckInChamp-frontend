@@ -20,7 +20,7 @@ import { FormTypes } from "@/types/CardWithFormTypes";
 import {
   calculateOverallParticipationRate,
   getPendingRemindersCount,
-} from "@/utils/helpers";
+} from "../utils/helpers";
 import {
   StandupResponseTypes,
   StatusTypes,
