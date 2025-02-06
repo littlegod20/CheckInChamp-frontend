@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -17,10 +17,15 @@ import {
   ChartBarIcon,
   ChartPieIcon,
   ClipboardCheckIcon,
+  FrownIcon,
+  MehIcon,
+  Smile,
   ThumbsUpIcon,
 } from "lucide-react";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
+import { api } from "@/services/api";
+import { useAppSelector } from "@/hooks/hooks";
 
 // Register Chart.js components
 ChartJS.register(
@@ -34,50 +39,166 @@ ChartJS.register(
   Legend
 );
 
+interface AnalyticsData {
+  standups: {
+    completed: number;
+    pending: number;
+    avgParticipants: number;
+    trends: { _id: string; count: number }[];
+  };
+  moods: {
+    happy: number;
+    neutral: number;
+    sad: number;
+    avgMood: number;
+    trends: number[];
+  };
+  kudos: {
+    given: number;
+    topReceiver: { _id: string; count: 2 }[];
+    topCategory: { _id: string; count: 2 }[];
+  };
+  polls: {
+    total: { total: number }[];
+    avgParticipation: { avg: number }[];
+    mostPopular: { _id: string; count: number }[];
+  };
+  teamComparison?: { team: string; kudos: number; polls: number }[];
+}
+
 const MasterAnalyticsPage = () => {
   const [selectedTeam, setSelectedTeam] = useState<string>("All Teams");
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
-    start: "2023-10-01",
-    end: "2023-10-07",
+    start: "",
+    end: "",
   });
 
+  const { members } = useAppSelector((state) => state.app);
+
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
+    null
+  );
+  const [teams, setTeams] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
   // Dummy data
-  const analyticsData = {
-    standups: {
-      completed: 42,
-      pending: 8,
-      avgParticipants: 8.2,
-      trends: [5, 7, 6, 8, 7, 9, 6], // Weekly trend
-    },
-    moods: {
-      happy: 65,
-      neutral: 25,
-      sad: 10,
-      avgMood: 4.1, // 1-5 scale
-    },
-    kudos: {
-      given: 128,
-      topReceiver: "Alice",
-      topCategory: "Teamwork",
-    },
-    polls: {
-      total: 15,
-      avgParticipation: 82,
-      mostPopular: "Project Priorities",
-    },
-  };
+  // const analyticsData = {
+  //   standups: {
+  //     completed: 42,
+  //     pending: 8,
+  //     avgParticipants: 8.2,
+  //     trends: [5, 7, 6, 8, 7, 9, 6], // Weekly trend
+  //   },
+  //   moods: {
+  //     happy: 65,
+  //     neutral: 25,
+  //     sad: 10,
+  //     avgMood: 4.1, // 1-5 scale
+  //   },
+  //   kudos: {
+  //     given: 128,
+  //     topReceiver: "Alice",
+  //     topCategory: "Teamwork",
+  //   },
+  //   polls: {
+  //     total: 15,
+  //     avgParticipation: 82,
+  //     mostPopular: "Project Priorities",
+  //   },
+  // };
 
   // Teams for filter dropdown
-  const teams = ["All Teams", "Engineering", "Design", "Marketing"];
+  // const teams = ["All Teams", "Engineering", "Design", "Marketing"];
 
-  // Combined trends data
+  // // Combined trends data
+  // const combinedTrendsData = {
+  //   labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  //   datasets: [
+  //     {
+  //       type: "line" as const,
+  //       label: "Standup Completion",
+  //       data: analyticsData.standups.trends,
+  //       borderColor: "#3B82F6",
+  //       backgroundColor: "#3B82F6",
+  //       yAxisID: "y",
+  //     },
+  //     {
+  //       type: "bar" as const,
+  //       label: "Happy Moods",
+  //       data: [12, 15, 13, 14, 16, 12, 11],
+  //       backgroundColor: "#10B981",
+  //       yAxisID: "y1",
+  //     },
+  //   ],
+  // };
+
+  // // Comparison chart data
+  // const comparisonData = {
+  //   labels: teams.slice(1),
+  //   datasets: [
+  //     {
+  //       label: "Kudos Given",
+  //       data: [45, 32, 51],
+  //       backgroundColor: "#8B5CF6",
+  //     },
+  //     {
+  //       label: "Poll Participation",
+  //       data: [85, 78, 92],
+  //       backgroundColor: "#F59E0B",
+  //     },
+  //   ],
+  // };
+
+  // Fetch teams and analytics data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch teams list
+        const teamsRes = await api.get("/teams");
+        const teamNames = [
+          "All Teams",
+          ...teamsRes.data.map((t: { name: string }) => t.name),
+        ];
+        setTeams(teamNames);
+
+        // Fetch analytics data
+        const analyticsRes = await api.get("/master/analytics", {
+          params: {
+            team: selectedTeam === "All Teams" ? undefined : selectedTeam,
+            startDate: dateRange.start,
+            endDate: dateRange.end,
+          },
+        });
+
+        setAnalyticsData(analyticsRes.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [selectedTeam, dateRange.start, dateRange.end]);
+
+  useEffect(() => {
+    console.log("analytics data:", analyticsData);
+  }, [analyticsData]);
+
+  // Format data for charts
   const combinedTrendsData = {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    labels:
+      analyticsData?.standups.trends.map((t: { _id: string; count: number }) =>
+        new Date(t._id).toLocaleDateString("en-US", { weekday: "short" })
+      ) || [],
     datasets: [
       {
         type: "line" as const,
         label: "Standup Completion",
-        data: analyticsData.standups.trends,
+        data:
+          analyticsData?.standups.trends.map(
+            (t: { _id: string; count: number }) => t.count
+          ) || [],
         borderColor: "#3B82F6",
         backgroundColor: "#3B82F6",
         yAxisID: "y",
@@ -85,29 +206,56 @@ const MasterAnalyticsPage = () => {
       {
         type: "bar" as const,
         label: "Happy Moods",
-        data: [12, 15, 13, 14, 16, 12, 11],
+        data: analyticsData?.moods.trends || [],
         backgroundColor: "#10B981",
         yAxisID: "y1",
       },
     ],
   };
 
-  // Comparison chart data
   const comparisonData = {
     labels: teams.slice(1),
     datasets: [
       {
         label: "Kudos Given",
-        data: [45, 32, 51],
+        data: teams
+          .slice(1)
+          .map(
+            (team) =>
+              analyticsData?.teamComparison?.find(
+                (t: { team: string; kudos: number; polls: number }) =>
+                  t.team === team
+              )?.kudos || 0
+          ),
         backgroundColor: "#8B5CF6",
       },
       {
         label: "Poll Participation",
-        data: [85, 78, 92],
+        data: teams
+          .slice(1)
+          .map(
+            (team) =>
+              analyticsData?.teamComparison?.find(
+                (t: { team: string; kudos: number; polls: number }) =>
+                  t.team === team
+              )?.polls || 0
+          ),
         backgroundColor: "#F59E0B",
       },
     ],
   };
+
+  if (loading) {
+    return <div className="p-6 text-center">Loading analytics...</div>;
+  }
+
+  if (!analyticsData) {
+    return (
+      <div className="p-6 text-center text-red-500">
+        Error loading analytics data
+      </div>
+    );
+  }
 
   // Recent activities
   const recentActivities = [
@@ -136,6 +284,8 @@ const MasterAnalyticsPage = () => {
       details: "New poll created: Project Priorities",
     },
   ];
+
+  console.log("members:", members);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
@@ -210,12 +360,19 @@ const MasterAnalyticsPage = () => {
             <ClipboardCheckIcon className="h-6 w-6 text-blue-500 mr-2" />
             <h3 className="font-semibold">Standups</h3>
           </div>
-          <div className="text-3xl font-bold">
+          <div className="text-3xl font-bold flex gap-1">
             {analyticsData.standups.completed}
+            <span className="text-xs font-medium">completed</span>
           </div>
-          <div className="text-sm text-gray-600">
-            {analyticsData.standups.pending} pending · Ø{" "}
-            {analyticsData.standups.avgParticipants}
+          <div className="text-sm text-gray-600 flex flex-col">
+            <p>
+              {analyticsData.standups.pending}{" "}
+              <span className="text-xs pl-1 font-medium">pending</span>
+            </p>
+            <p>
+              {analyticsData.standups.avgParticipants}
+              <span className="text-xs pl-1 font-medium">avg. participants</span>
+            </p>
           </div>
         </div>
 
@@ -224,11 +381,22 @@ const MasterAnalyticsPage = () => {
             <ChartBarBigIcon className="h-6 w-6 text-green-500 mr-2" />
             <h3 className="font-semibold">Mood</h3>
           </div>
-          <div className="text-3xl font-bold">
-            {analyticsData.moods.avgMood}/5
+          <div className="text-3xl font-bold pb-2">
+            {analyticsData.moods.avgMood}
           </div>
-          <div className="text-sm text-gray-600">
-            {analyticsData.moods.happy}% happy · {analyticsData.moods.sad}% sad
+          <div className="text-sm text-gray-600 font-bold flex gap-2">
+            <div className="flex gap-1 items-center flex-col-reverse justify-center">
+              <Smile className="text-green-500" size={18} />
+              {analyticsData.moods.happy}
+            </div>
+            <span className="flex gap-1 items-center flex-col-reverse justify-center">
+              <FrownIcon className="text-red-500" size={18} />
+              {analyticsData.moods.sad}
+            </span>
+            <span className="flex gap-1 items-center flex-col-reverse justify-center">
+              <MehIcon className="text-yellow-500" size={18} />
+              {analyticsData.moods.neutral}
+            </span>
           </div>
         </div>
 
@@ -239,8 +407,18 @@ const MasterAnalyticsPage = () => {
           </div>
           <div className="text-3xl font-bold">{analyticsData.kudos.given}</div>
           <div className="text-sm text-gray-600">
-            Top: {analyticsData.kudos.topReceiver} ·{" "}
-            {analyticsData.kudos.topCategory}
+            <p className="capitalize">
+              <span className="text-xs font-medium pr-2">Top Member:</span>
+              {
+                members.find(
+                  (item) => item.id === analyticsData.kudos.topReceiver[0]?._id
+                )?.name
+              }
+            </p>
+            <p className="capitalize">
+              <span className="text-xs font-medium pr-2">Top category:</span>
+              {analyticsData.kudos.topCategory[0]?._id}
+            </p>
           </div>
         </div>
 
@@ -249,10 +427,21 @@ const MasterAnalyticsPage = () => {
             <ChartPieIcon className="h-6 w-6 text-orange-500 mr-2" />
             <h3 className="font-semibold">Polls</h3>
           </div>
-          <div className="text-3xl font-bold">{analyticsData.polls.total}</div>
+          <div className="text-3xl font-bold flex gap-1">
+            {analyticsData.polls.total[0]?.total}{" "}
+            <p className="text-xs font-medium">total polls</p>
+          </div>
           <div className="text-sm text-gray-600">
-            Ø {analyticsData.polls.avgParticipation}% · "
-            {analyticsData.polls.mostPopular}"
+            <p>
+              {" "}
+              <span className="text-xs font-medium">Avg:</span>{" "}
+              {analyticsData.polls.avgParticipation[0]?.avg.toFixed(2)}{" "}
+            </p>
+            <p className="line-clamp-2 w-full">
+              {" "}
+              <span className="text-xs font-medium">Most Popular:</span> "
+              {analyticsData.polls.mostPopular[0]?._id}"
+            </p>
           </div>
         </div>
       </div>
