@@ -19,6 +19,8 @@ import {
   ClipboardCheckIcon,
   ThumbsUpIcon,
 } from "lucide-react";
+import Header from "@/components/Header";
+import { Button } from "@/components/ui/button";
 
 // Register Chart.js components
 ChartJS.register(
@@ -138,18 +140,16 @@ const MasterAnalyticsPage = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
       {/* Header */}
-      <div className="mb-8 flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Master Analytics</h1>
-          <p className="text-gray-600 mt-2">
-            Comprehensive insights across all team activities
-          </p>
-        </div>
-        <button className="bg-green-primary text-white px-4 py-2 rounded-lg hover:bg-green-secondary flex items-center">
-          <ArrowDown01Icon className="h-5 w-5 mr-2" />
-          Export Report
-        </button>
-      </div>
+      <Header
+        title="Master Analytics"
+        description="Comprehensive insights across all team activities"
+        Button={
+          <Button className="bg-green-primary text-white px-4 py-2 rounded-lg hover:bg-green-secondary flex items-center">
+            <ArrowDown01Icon className="h-5 w-5 mr-2" />
+            Export Report
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
