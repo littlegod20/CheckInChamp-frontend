@@ -16,6 +16,7 @@ interface Kudos {
 interface LeaderboardEntry {
   userId: string;
   name: string;
+  rank: number;
   kudosCount: number;
 }
 
@@ -30,6 +31,7 @@ const KudosDashboard = () => {
   const categories = ["teamwork", "creativity", "leadership"];
 
   useEffect(() => {
+    console.log("Updated Leaderboard State:", leaderboard);
     fetchKudos();
     fetchLeaderboard();
   }, []);
@@ -46,6 +48,7 @@ const KudosDashboard = () => {
   const fetchLeaderboard = async () => {
     try {
       const response = await getKudosLeaderboard();
+      console.log("Leaderboard Data:", response.data);
       setLeaderboard(response.data);
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
@@ -92,23 +95,25 @@ const KudosDashboard = () => {
                 <th>Kudos Received</th>
               </tr>
             </thead>
+            
             <tbody>
-              {leaderboard.length > 0 ? (
-                leaderboard.map((entry, index) => (
-                  <tr key={entry.userId}>
-                    <td>
-                      {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
-                    </td>
-                    <td>{entry.name}</td>
-                    <td>{entry.kudosCount}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={3} className="no-data">No data available</td>
-                </tr>
-              )}
-            </tbody>
+  {leaderboard.length > 0 ? (
+    leaderboard.map((entry) => (
+      <tr key={entry.userId}>
+        <td>
+          {entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : entry.rank}
+        </td>
+        <td>{entry.name}</td>
+        <td>{entry.kudosCount}</td>
+      </tr>
+    ))
+  ) : (
+    <tr>
+      <td colSpan={3} className="no-data">No data available</td>
+    </tr>
+  )}
+</tbody>
+
           </table>
         </div>
 
