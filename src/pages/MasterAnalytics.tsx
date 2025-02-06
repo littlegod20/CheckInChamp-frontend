@@ -145,7 +145,7 @@ const MasterAnalyticsPage = () => {
             Comprehensive insights across all team activities
           </p>
         </div>
-        <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center">
+        <button className="bg-green-primary text-white px-4 py-2 rounded-lg hover:bg-green-secondary flex items-center">
           <ArrowDown01Icon className="h-5 w-5 mr-2" />
           Export Report
         </button>
