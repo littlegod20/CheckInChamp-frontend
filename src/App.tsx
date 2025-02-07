@@ -11,6 +11,7 @@ import StandupDetailsPage from "./pages/StandupDetailsPage";
 import KudosDashboard from "./pages/KudosDashboard";
 import KudosHistory from "./pages/KudosHistory";
 import Leaderboard from "./pages/Leaderboard";
+import Polls from "./pages/Polls";
 
 const App: React.FC = () => {
   return (
@@ -26,6 +27,7 @@ const App: React.FC = () => {
           <Route path="/kudos-history" element={<KudosHistory />} />
           <Route path="/kudos" element={<KudosDashboard />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/polls" element={<Polls />} />
         </Route>
       </Routes>
     </BrowserRouter>

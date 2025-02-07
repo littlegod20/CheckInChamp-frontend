@@ -142,3 +142,15 @@ export const getKudosStats = async () => {
 export const getKudosTrends = async () => {
   return api.get("/kudos/trends");
 };
+
+// Fetch all polls
+// Fetch all polls with optional team filter
+export const getPolls = async (teamName?: string) => {
+  return api.get("/polls", { params: teamName ? { teamName } : {} });
+};
+
+// Fetch poll details by pollId
+export const getPollDetails = async (pollId: string) => {
+  return api.get(`/polls/${pollId}/details`);
+};
+
