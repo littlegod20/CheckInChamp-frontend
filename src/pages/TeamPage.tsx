@@ -10,12 +10,15 @@ import { useAppDispatch, useAppSelector } from "../hooks/hooks";
 import { fetchTeams, fetchMember } from "../store/store";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
+import CardWithForm from "@/components/CardWithForm";
 
 const TeamsPage = () => {
   const [selectedTeam, setSelectedTeam] = useState<FormTypes | null>(null);
   const [activeTab, setActiveTab] = useState<
     "members" | "schedule" | "questions" | "reminders" | "moods"
   >("members");
+
+  const [isOpen, setIsOpen] = useState(false);
 
   const dispatch = useAppDispatch();
   const { teams, members } = useAppSelector((state) => state.app);
@@ -395,7 +398,7 @@ const TeamsPage = () => {
         description="Manage your teams and their configurations"
         Button={
           <Button
-            // onClick={handleAddTeam}
+            onClick={() => setIsOpen(true)}
             className="bg-green-primary text-white hover:bg-green-secondary flex items-center"
           >
             <Plus size={30} />
@@ -821,6 +824,7 @@ const TeamsPage = () => {
           </div>
         )}
       </div>
+      {isOpen && <CardWithForm />}
     </div>
   );
 };

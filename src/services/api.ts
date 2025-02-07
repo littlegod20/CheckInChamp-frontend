@@ -16,12 +16,12 @@ interface Answer {
   question: string;
   answer: string;
 }
-interface KudosData {
-  giverId: string;
-  receiverId: string;
-  category: string;
-  reason: string;
-}
+// interface KudosData {
+//   giverId: string;
+//   receiverId: string;
+//   category: string;
+//   reason: string;
+// }
 
 // Set up base URL for your backend API
 export const api = axios.create({

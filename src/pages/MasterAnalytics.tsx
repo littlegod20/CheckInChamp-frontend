@@ -44,7 +44,17 @@ interface AnalyticsData {
     completed: number;
     pending: number;
     avgParticipants: number;
-    trends: { _id: string; count: number }[];
+    trends: {
+      _id: string;
+      completedStandups: number;
+      date: string;
+      standupCount: number;
+      moodDistribution: {
+        happy: number;
+        neutral: number;
+        sad: number;
+      };
+    }[];
   };
   moods: {
     happy: number;
@@ -64,6 +74,12 @@ interface AnalyticsData {
     mostPopular: { _id: string; count: number }[];
   };
   teamComparison?: { team: string; kudos: number; polls: number }[];
+  recentActivities: {
+    type: string;
+    teamId: string;
+    date: string;
+    details: string;
+  }[];
 }
 
 const MasterAnalyticsPage = () => {
@@ -80,74 +96,6 @@ const MasterAnalyticsPage = () => {
   );
   const [teams, setTeams] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Dummy data
-  // const analyticsData = {
-  //   standups: {
-  //     completed: 42,
-  //     pending: 8,
-  //     avgParticipants: 8.2,
-  //     trends: [5, 7, 6, 8, 7, 9, 6], // Weekly trend
-  //   },
-  //   moods: {
-  //     happy: 65,
-  //     neutral: 25,
-  //     sad: 10,
-  //     avgMood: 4.1, // 1-5 scale
-  //   },
-  //   kudos: {
-  //     given: 128,
-  //     topReceiver: "Alice",
-  //     topCategory: "Teamwork",
-  //   },
-  //   polls: {
-  //     total: 15,
-  //     avgParticipation: 82,
-  //     mostPopular: "Project Priorities",
-  //   },
-  // };
-
-  // Teams for filter dropdown
-  // const teams = ["All Teams", "Engineering", "Design", "Marketing"];
-
-  // // Combined trends data
-  // const combinedTrendsData = {
-  //   labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-  //   datasets: [
-  //     {
-  //       type: "line" as const,
-  //       label: "Standup Completion",
-  //       data: analyticsData.standups.trends,
-  //       borderColor: "#3B82F6",
-  //       backgroundColor: "#3B82F6",
-  //       yAxisID: "y",
-  //     },
-  //     {
-  //       type: "bar" as const,
-  //       label: "Happy Moods",
-  //       data: [12, 15, 13, 14, 16, 12, 11],
-  //       backgroundColor: "#10B981",
-  //       yAxisID: "y1",
-  //     },
-  //   ],
-  // };
-
-  // // Comparison chart data
-  // const comparisonData = {
-  //   labels: teams.slice(1),
-  //   datasets: [
-  //     {
-  //       label: "Kudos Given",
-  //       data: [45, 32, 51],
-  //       backgroundColor: "#8B5CF6",
-  //     },
-  //     {
-  //       label: "Poll Participation",
-  //       data: [85, 78, 92],
-  //       backgroundColor: "#F59E0B",
-  //     },
-  //   ],
-  // };
 
   // Fetch teams and analytics data
   useEffect(() => {
@@ -188,8 +136,18 @@ const MasterAnalyticsPage = () => {
   // Format data for charts
   const combinedTrendsData = {
     labels:
-      analyticsData?.standups.trends.map((t: { _id: string; count: number }) =>
-        new Date(t._id).toLocaleDateString("en-US", { weekday: "short" })
+      analyticsData?.standups.trends.map(
+        (t: {
+          _id: string;
+          completedStandups: number;
+          date: string;
+          standupCount: number;
+          moodDistribution: {
+            happy: number;
+            neutral: number;
+            sad: number;
+          };
+        }) => new Date(t._id).toLocaleDateString("en-US", { weekday: "short" })
       ) || [],
     datasets: [
       {
@@ -197,7 +155,17 @@ const MasterAnalyticsPage = () => {
         label: "Standup Completion",
         data:
           analyticsData?.standups.trends.map(
-            (t: { _id: string; count: number }) => t.count
+            (t: {
+              _id: string;
+              completedStandups: number;
+              date: string;
+              standupCount: number;
+              moodDistribution: {
+                happy: number;
+                neutral: number;
+                sad: number;
+              };
+            }) => t.completedStandups
           ) || [],
         borderColor: "#3B82F6",
         backgroundColor: "#3B82F6",
@@ -206,12 +174,15 @@ const MasterAnalyticsPage = () => {
       {
         type: "bar" as const,
         label: "Happy Moods",
-        data: analyticsData?.moods.trends || [],
+        data:
+          analyticsData?.standups.trends.map((m) => m.moodDistribution.happy) ||
+          [],
         backgroundColor: "#10B981",
         yAxisID: "y1",
       },
     ],
   };
+  console.log("combinedTrendsData:", combinedTrendsData);
 
   const comparisonData = {
     labels: teams.slice(1),
@@ -257,33 +228,9 @@ const MasterAnalyticsPage = () => {
     );
   }
 
-  // Recent activities
-  const recentActivities = [
-    {
-      type: "standup",
-      team: "Engineering",
-      date: "2023-10-07",
-      details: "Daily standup completed",
-    },
-    {
-      type: "mood",
-      team: "Design",
-      date: "2023-10-07",
-      details: "Team mood check-in completed",
-    },
-    {
-      type: "kudos",
-      team: "Marketing",
-      date: "2023-10-06",
-      details: "5 kudos given",
-    },
-    {
-      type: "poll",
-      team: "Engineering",
-      date: "2023-10-06",
-      details: "New poll created: Project Priorities",
-    },
-  ];
+  const recentActivities = analyticsData.recentActivities;
+
+  console.log("recents:", recentActivities);
 
   console.log("members:", members);
 
@@ -371,7 +318,9 @@ const MasterAnalyticsPage = () => {
             </p>
             <p>
               {analyticsData.standups.avgParticipants}
-              <span className="text-xs pl-1 font-medium">avg. participants</span>
+              <span className="text-xs pl-1 font-medium">
+                avg. participants
+              </span>
             </p>
           </div>
         </div>
@@ -381,8 +330,18 @@ const MasterAnalyticsPage = () => {
             <ChartBarBigIcon className="h-6 w-6 text-green-500 mr-2" />
             <h3 className="font-semibold">Mood</h3>
           </div>
-          <div className="text-3xl font-bold pb-2">
-            {analyticsData.moods.avgMood}
+          <div className="text-3xl font-bold pb-2 flex">
+            {analyticsData.moods.avgMood >= 1 &&
+            analyticsData.moods.avgMood <= 1.5 ? (
+              <MehIcon className="text-yellow-500" size={40} />
+            ) : analyticsData.moods.avgMood >= 1.5 ? (
+              <Smile className="text-green-500" size={40} />
+            ) : analyticsData.moods.avgMood < 1 ? (
+              <FrownIcon className="text-red-500" size={40} />
+            ) : (
+              ""
+            )}
+            <p className="font-medium text-xs">Overall mood</p>
           </div>
           <div className="text-sm text-gray-600 font-bold flex gap-2">
             <div className="flex gap-1 items-center flex-col-reverse justify-center">
@@ -409,11 +368,8 @@ const MasterAnalyticsPage = () => {
           <div className="text-sm text-gray-600">
             <p className="capitalize">
               <span className="text-xs font-medium pr-2">Top Member:</span>
-              {
-                members.find(
-                  (item) => item.id === analyticsData.kudos.topReceiver[0]?._id
-                )?.name
-              }
+
+              {analyticsData.kudos.topReceiver[0]?._id}
             </p>
             <p className="capitalize">
               <span className="text-xs font-medium pr-2">Top category:</span>
@@ -497,10 +453,12 @@ const MasterAnalyticsPage = () => {
                 )}
               </div>
               <div className="flex-1">
-                <div className="font-medium">{activity.team} Team</div>
+                <div className="font-medium">{activity.teamId}</div>
                 <div className="text-sm text-gray-600">{activity.details}</div>
               </div>
-              <div className="text-sm text-gray-500">{activity.date}</div>
+              <div className="text-sm text-gray-500">
+                {new Date(activity.date).toISOString().split("T")[0]}
+              </div>
             </div>
           ))}
         </div>
