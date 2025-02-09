@@ -266,9 +266,9 @@ const TeamsPage = () => {
             text: newQuestion.text,
             type: newQuestion.type,
             options:
-              newQuestion.type === "multiple-choice" ||
+              newQuestion.type === "multiple_choice" ||
               newQuestion.type === "checkbox" ||
-              newQuestion.type === "select" ||
+              newQuestion.type === "single_select" ||
               newQuestion.type === "radio"
                 ? newQuestion.options.map((item) => item.trim())
                 : [],
@@ -680,7 +680,7 @@ const TeamsPage = () => {
                         options={[
                           "Text",
                           "Multiple Choice",
-                          "Select",
+                          "Single Select",
                           "CheckBox",
                           "Radio",
                         ]}
@@ -695,10 +695,10 @@ const TeamsPage = () => {
                       </button>
                     </div>
                     {/* Show options input field when type is multiple_choice */}
-                    {(newQuestion.type === "multiple-choice" ||
+                    {(newQuestion.type === "multiple_choice" ||
                       newQuestion.type === "radio" ||
                       newQuestion.type === "checkbox" ||
-                      newQuestion.type === "select") && (
+                      newQuestion.type === "single_select") && (
                       <div className="flex items-center space-x-4">
                         <input
                           type="text"

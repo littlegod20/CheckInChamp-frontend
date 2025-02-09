@@ -25,11 +25,7 @@ import {
 } from "./ui/select";
 import { Label } from "./ui/label";
 import MultitSelect from "./MultitSelect";
-import {
-  daysOfWeek,
-  times12hr,
-  timezones,
-} from "../utils/staticDropdowns";
+import { daysOfWeek, times12hr, timezones } from "../utils/staticDropdowns";
 import { createTeam } from "@/services/api";
 import axios from "axios";
 
@@ -326,11 +322,14 @@ const CardWithForm = ({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="text">Text</SelectItem>
-                          <SelectItem value="multiple-choice">
+                          <SelectItem value="multiple_choice">
                             Multiple Choice
                           </SelectItem>
                           <SelectItem value="checkbox">Check Box</SelectItem>
                           <SelectItem value="radio">Radio</SelectItem>
+                          <SelectItem value="single_select">
+                            Single Select
+                          </SelectItem>
                         </SelectContent>
                       </ShadcnSelect>
                       <Button
@@ -341,8 +340,9 @@ const CardWithForm = ({
                         Remove
                       </Button>
                     </div>
-                    {question.type === "multiple-choice" ||
+                    {question.type === "multiple_choice" ||
                     question.type === "checkbox" ||
+                    question.type === "single_select" ||
                     question.type === "radio" ? (
                       <div className="pt-3 flex items-center gap-3">
                         <Label>Options:</Label>

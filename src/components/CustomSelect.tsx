@@ -32,7 +32,7 @@ const CustomSelect = ({
             options.map((item, index) => (
               <SelectItem
                 key={index}
-                value={item.split(" ").join("-").toLowerCase()}
+                value={item.split(" ").join("_").toLowerCase()}
               >
                 {item}
               </SelectItem>
