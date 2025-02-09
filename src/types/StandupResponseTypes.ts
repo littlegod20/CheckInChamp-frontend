@@ -41,7 +41,7 @@ export interface StandUpConfigTypes {
   questions: {
     id: string;
     options?: string[];
-    required: boolean;
+    required: boolean; 
     text: string;
     type: string;
   }[];
