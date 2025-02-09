@@ -25,7 +25,7 @@ import {
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
-import { useAppSelector } from "@/hooks/hooks";
+import { AnalyticsDataTypes } from "@/types/AnalyticsDataTypes";
 
 // Register Chart.js components
 ChartJS.register(
@@ -39,49 +39,6 @@ ChartJS.register(
   Legend
 );
 
-interface AnalyticsData {
-  standups: {
-    completed: number;
-    pending: number;
-    avgParticipants: number;
-    trends: {
-      _id: string;
-      completedStandups: number;
-      date: string;
-      standupCount: number;
-      moodDistribution: {
-        happy: number;
-        neutral: number;
-        sad: number;
-      };
-    }[];
-  };
-  moods: {
-    happy: number;
-    neutral: number;
-    sad: number;
-    avgMood: number;
-    trends: number[];
-  };
-  kudos: {
-    given: number;
-    topReceiver: { _id: string; count: 2 }[];
-    topCategory: { _id: string; count: 2 }[];
-  };
-  polls: {
-    total: { total: number }[];
-    avgParticipation: { avg: number }[];
-    mostPopular: { _id: string; count: number }[];
-  };
-  teamComparison?: { team: string; kudos: number; polls: number }[];
-  recentActivities: {
-    type: string;
-    teamId: string;
-    date: string;
-    details: string;
-  }[];
-}
-
 const MasterAnalyticsPage = () => {
   const [selectedTeam, setSelectedTeam] = useState<string>("All Teams");
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
@@ -89,13 +46,10 @@ const MasterAnalyticsPage = () => {
     end: "",
   });
 
-  const { members } = useAppSelector((state) => state.app);
-
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsDataTypes | null>(
     null
   );
   const [teams, setTeams] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Fetch teams and analytics data
   useEffect(() => {
@@ -121,8 +75,6 @@ const MasterAnalyticsPage = () => {
         setAnalyticsData(analyticsRes.data);
       } catch (error) {
         console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -182,7 +134,6 @@ const MasterAnalyticsPage = () => {
       },
     ],
   };
-  console.log("combinedTrendsData:", combinedTrendsData);
 
   const comparisonData = {
     labels: teams.slice(1),
@@ -216,23 +167,7 @@ const MasterAnalyticsPage = () => {
     ],
   };
 
-  if (loading) {
-    return <div className="p-6 text-center">Loading analytics...</div>;
-  }
-
-  if (!analyticsData) {
-    return (
-      <div className="p-6 text-center text-red-500">
-        Error loading analytics data
-      </div>
-    );
-  }
-
-  const recentActivities = analyticsData.recentActivities;
-
-  console.log("recents:", recentActivities);
-
-  console.log("members:", members);
+  const recentActivities = analyticsData?.recentActivities;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
@@ -279,7 +214,6 @@ const MasterAnalyticsPage = () => {
               }
               className="w-full p-2 border rounded-lg"
             />
-            {/* <CalendarIcon className="h-5 w-5 absolute right-2 top-2.5 text-gray-400" /> */}
           </div>
         </div>
         <div>
@@ -295,7 +229,6 @@ const MasterAnalyticsPage = () => {
               }
               className="w-full p-2 border rounded-lg"
             />
-            {/* <CalendarIcon className="h-5 w-5 absolute right-2 top-2.5 text-gray-400" /> */}
           </div>
         </div>
       </div>
@@ -308,16 +241,16 @@ const MasterAnalyticsPage = () => {
             <h3 className="font-semibold">Standups</h3>
           </div>
           <div className="text-3xl font-bold flex gap-1">
-            {analyticsData.standups.completed}
+            {analyticsData?.standups.completed}
             <span className="text-xs font-medium">completed</span>
           </div>
           <div className="text-sm text-gray-600 flex flex-col">
             <p>
-              {analyticsData.standups.pending}{" "}
+              {analyticsData?.standups.pending}{" "}
               <span className="text-xs pl-1 font-medium">pending</span>
             </p>
             <p>
-              {analyticsData.standups.avgParticipants}
+              {analyticsData?.standups.avgParticipants}
               <span className="text-xs pl-1 font-medium">
                 avg. participants
               </span>
@@ -330,31 +263,33 @@ const MasterAnalyticsPage = () => {
             <ChartBarBigIcon className="h-6 w-6 text-green-500 mr-2" />
             <h3 className="font-semibold">Mood</h3>
           </div>
-          <div className="text-3xl font-bold pb-2 flex">
-            {analyticsData.moods.avgMood >= 1 &&
-            analyticsData.moods.avgMood <= 1.5 ? (
-              <MehIcon className="text-yellow-500" size={40} />
-            ) : analyticsData.moods.avgMood >= 1.5 ? (
-              <Smile className="text-green-500" size={40} />
-            ) : analyticsData.moods.avgMood < 1 ? (
-              <FrownIcon className="text-red-500" size={40} />
-            ) : (
-              ""
-            )}
-            <p className="font-medium text-xs">Overall mood</p>
-          </div>
+          {analyticsData && (
+            <div className="text-3xl font-bold pb-2 flex">
+              {analyticsData.moods.avgMood >= 1 &&
+              analyticsData.moods.avgMood <= 1.5 ? (
+                <MehIcon className="text-yellow-500" size={40} />
+              ) : analyticsData.moods.avgMood >= 1.5 ? (
+                <Smile className="text-green-500" size={40} />
+              ) : analyticsData.moods.avgMood < 1 ? (
+                <FrownIcon className="text-red-500" size={40} />
+              ) : (
+                ""
+              )}
+              <p className="font-medium text-xs">Overall mood</p>
+            </div>
+          )}
           <div className="text-sm text-gray-600 font-bold flex gap-2">
             <div className="flex gap-1 items-center flex-col-reverse justify-center">
               <Smile className="text-green-500" size={18} />
-              {analyticsData.moods.happy}
+              {analyticsData?.moods.happy}
             </div>
             <span className="flex gap-1 items-center flex-col-reverse justify-center">
               <FrownIcon className="text-red-500" size={18} />
-              {analyticsData.moods.sad}
+              {analyticsData?.moods.sad}
             </span>
             <span className="flex gap-1 items-center flex-col-reverse justify-center">
               <MehIcon className="text-yellow-500" size={18} />
-              {analyticsData.moods.neutral}
+              {analyticsData?.moods.neutral}
             </span>
           </div>
         </div>
@@ -364,16 +299,16 @@ const MasterAnalyticsPage = () => {
             <ThumbsUpIcon className="h-6 w-6 text-purple-500 mr-2" />
             <h3 className="font-semibold">Kudos</h3>
           </div>
-          <div className="text-3xl font-bold">{analyticsData.kudos.given}</div>
+          <div className="text-3xl font-bold">{analyticsData?.kudos.given}</div>
           <div className="text-sm text-gray-600">
             <p className="capitalize">
               <span className="text-xs font-medium pr-2">Top Member:</span>
 
-              {analyticsData.kudos.topReceiver[0]?._id}
+              {analyticsData?.kudos.topReceiver[0]?._id}
             </p>
             <p className="capitalize">
               <span className="text-xs font-medium pr-2">Top category:</span>
-              {analyticsData.kudos.topCategory[0]?._id}
+              {analyticsData?.kudos.topCategory[0]?._id}
             </p>
           </div>
         </div>
@@ -384,19 +319,19 @@ const MasterAnalyticsPage = () => {
             <h3 className="font-semibold">Polls</h3>
           </div>
           <div className="text-3xl font-bold flex gap-1">
-            {analyticsData.polls.total[0]?.total}{" "}
+            {analyticsData?.polls.total[0]?.total}{" "}
             <p className="text-xs font-medium">total polls</p>
           </div>
           <div className="text-sm text-gray-600">
             <p>
               {" "}
               <span className="text-xs font-medium">Avg:</span>{" "}
-              {analyticsData.polls.avgParticipation[0]?.avg.toFixed(2)}{" "}
+              {analyticsData?.polls.avgParticipation[0]?.avg.toFixed(2)}{" "}
             </p>
             <p className="line-clamp-2 w-full">
               {" "}
               <span className="text-xs font-medium">Most Popular:</span> "
-              {analyticsData.polls.mostPopular[0]?._id}"
+              {analyticsData?.polls.mostPopular[0]?._id}"
             </p>
           </div>
         </div>
@@ -433,34 +368,37 @@ const MasterAnalyticsPage = () => {
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h3 className="text-lg font-semibold mb-4">Recent Activities</h3>
         <div className="space-y-4">
-          {recentActivities.map((activity, index) => (
-            <div
-              key={index}
-              className="flex items-center p-3 hover:bg-gray-50 rounded-lg"
-            >
-              <div className="flex-shrink-0 mr-4">
-                {activity.type === "standup" && (
-                  <ClipboardCheckIcon className="h-6 w-6 text-blue-500" />
-                )}
-                {activity.type === "mood" && (
-                  <ChartBarIcon className="h-6 w-6 text-green-500" />
-                )}
-                {activity.type === "kudos" && (
-                  <ThumbsUpIcon className="h-6 w-6 text-purple-500" />
-                )}
-                {activity.type === "poll" && (
-                  <ChartPieIcon className="h-6 w-6 text-orange-500" />
-                )}
+          {recentActivities &&
+            recentActivities.map((activity, index) => (
+              <div
+                key={index}
+                className="flex items-center p-3 hover:bg-gray-50 rounded-lg"
+              >
+                <div className="flex-shrink-0 mr-4">
+                  {activity.type === "standup" && (
+                    <ClipboardCheckIcon className="h-6 w-6 text-blue-500" />
+                  )}
+                  {activity.type === "mood" && (
+                    <ChartBarIcon className="h-6 w-6 text-green-500" />
+                  )}
+                  {activity.type === "kudos" && (
+                    <ThumbsUpIcon className="h-6 w-6 text-purple-500" />
+                  )}
+                  {activity.type === "poll" && (
+                    <ChartPieIcon className="h-6 w-6 text-orange-500" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium">{activity.teamId}</div>
+                  <div className="text-sm text-gray-600">
+                    {activity.details}
+                  </div>
+                </div>
+                <div className="text-sm text-gray-500">
+                  {new Date(activity.date).toISOString().split("T")[0]}
+                </div>
               </div>
-              <div className="flex-1">
-                <div className="font-medium">{activity.teamId}</div>
-                <div className="text-sm text-gray-600">{activity.details}</div>
-              </div>
-              <div className="text-sm text-gray-500">
-                {new Date(activity.date).toISOString().split("T")[0]}
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </div>
