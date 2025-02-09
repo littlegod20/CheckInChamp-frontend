@@ -9,12 +9,12 @@ const Navbar: React.FC = () => {
 
   const handleNavBar = (val: string) => {
     localStorage.setItem("navTab", val);
-    
+    setActiveTab(val);
+
     if (val === "dashboard") {
       navigate("/");
       return;
     }
-    setActiveTab(val);
     navigate(`${val}`);
   };
 
