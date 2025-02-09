@@ -6,8 +6,10 @@ import Header from "@/components/Header";
 
 interface Kudos {
   _id: string;
-  giver: { id: string; name: string };
-  receiver: { id: string; name: string };
+  // giver: { id: string; name: string };
+  // receiver: { id: string; name: string };
+  giverId: string;
+  receiverId: string;
   category: string;
   reason: string;
   timestamp: string;
@@ -47,6 +49,7 @@ const KudosDashboard = () => {
     try {
       const response = await getKudosLeaderboard();
       setLeaderboard(response.data);
+      console.log("leaderboard:", response.data)
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
     }
@@ -59,8 +62,8 @@ const KudosDashboard = () => {
         ? k.category === selectedCategory
         : true;
       const matchesUser = selectedUser
-        ? k.giver.name.toLowerCase().includes(selectedUser.toLowerCase()) ||
-          k.receiver.name.toLowerCase().includes(selectedUser.toLowerCase())
+        ? k.giverId ||
+          k.receiverId
         : true;
       const matchesDate = selectedDate
         ? format(new Date(k.timestamp), "yyyy-MM-dd") === selectedDate
@@ -106,7 +109,7 @@ const KudosDashboard = () => {
                       ? "🥉"
                       : index + 1}
                   </td>
-                  <td>{entry.name}</td>
+                  <td>{entry.userId}</td>
                   <td>{entry.kudosCount}</td>
                 </tr>
               ))
@@ -172,8 +175,8 @@ const KudosDashboard = () => {
           {filteredKudos.length > 0 ? (
             filteredKudos.map((k) => (
               <tr key={k._id}>
-                <td>{k.giver.name}</td>
-                <td>{k.receiver.name}</td>
+                <td>{k.giverId}</td>
+                <td>{k.receiverId}</td>
                 <td>{k.category}</td>
                 <td>{k.reason}</td>
                 <td>{format(new Date(k.timestamp), "yyyy-MM-dd")}</td>

@@ -1,4 +1,3 @@
-
 interface HeatmapProps {
   xLabels: string[];
   yLabels: string[];
@@ -29,7 +28,7 @@ const CustomHeatmap = ({ xLabels, yLabels, data }: HeatmapProps) => {
 
     return (
       <div
-        className={`w-full h-full ${
+        className={`w-32 h-32 ${
           moodColors[cell.mood]
         } rounded-md transition-colors
           flex items-center justify-center group relative`}
@@ -50,15 +49,15 @@ const CustomHeatmap = ({ xLabels, yLabels, data }: HeatmapProps) => {
   };
 
   return (
-    <div className="md:max-w-[700px] overflow-x-auto">
+    <div className="overflow-x-auto overflow-y-auto">
       <div className="inline-block min-w-full">
         {/* X-axis labels */}
         <div className="flex">
           <div className="w-32" /> {/* Spacing for y-labels */}
-          <div className="flex-1 flex">
+          <div className="flex gap-20">
             {xLabels.map((label, i) => (
-              <div key={i} className="flex-1 px-1">
-                <div className="text-xs text-gray-600 truncate text-center">
+              <div key={i} className="flex-1 px-1 flex">
+                <div className="text-xs text-gray-600 truncate text-center ">
                   {label}
                 </div>
               </div>
@@ -67,16 +66,18 @@ const CustomHeatmap = ({ xLabels, yLabels, data }: HeatmapProps) => {
         </div>
 
         {/* Grid */}
-        <div className="mt-2">
+        <div className="mt-2 ">
           {yLabels.map((yLabel, y) => (
             <div key={y} className="flex mb-2">
               {/* Y-axis label */}
               <div className="w-32 pr-2">
-                <div className="text-xs text-gray-600 truncate uppercase font-bold">{yLabel}</div>
+                <div className="text-xs text-gray-600 truncate uppercase font-bold">
+                  {yLabel}
+                </div>
               </div>
 
               {/* Grid cells */}
-              <div className="flex-1 flex gap-1">
+              <div className="flex gap-6">
                 {xLabels.map((_, x) => (
                   <div key={x} className="flex-1 aspect-square">
                     {getCellContent(x, y) || (
