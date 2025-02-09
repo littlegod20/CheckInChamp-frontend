@@ -8,26 +8,27 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
 
   const handleNavBar = (val: string) => {
-    setActiveTab(val);
     localStorage.setItem("navTab", val);
-
+    
     if (val === "dashboard") {
       navigate("/");
       return;
     }
+    setActiveTab(val);
     navigate(`${val}`);
   };
 
   useEffect(() => {
     const active = localStorage.getItem("navTab");
     if (active) {
+      console.log("active tab:", active);
       setActiveTab(active);
     }
 
-    return () => {
-      localStorage.removeItem("navTab");
-    };
-  }, []);
+    // return () => {
+    //   localStorage.removeItem("navTab");
+    // };
+  }, [activeTab]);
 
   return (
     <nav className="bg-black-primary w-[100px] md:w-[300px] rounded-r-3xl px-4 space-y-4 text-sm">
