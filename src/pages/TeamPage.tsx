@@ -824,7 +824,15 @@ const TeamsPage = () => {
           </div>
         )}
       </div>
-      {isOpen && <CardWithForm />}
+      {isOpen && (
+        <div>
+          <CardWithForm
+            title="Create A Team"
+            description="Create and configure your team's standups"
+            onCancel={() => setIsOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };
