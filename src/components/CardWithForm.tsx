@@ -170,6 +170,7 @@ const CardWithForm = ({
     setIsSubmitting(true); // Start loading
 
     try {
+      
       const response = await createTeam(form);
       console.log("response", response.data);
       setForm(initialForm); // Reset form on success
