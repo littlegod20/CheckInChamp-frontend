@@ -285,7 +285,7 @@ const TeamsPage = () => {
     console.log("updated:", updatedTeam);
     setNewQuestion({ text: "", type: "", options: [] });
   };
-  // Remove a question
+  // Remove a questionFile explorer
   const handleRemoveQuestion = (questionId: number) => {
     if (!selectedTeam) return;
 
@@ -359,29 +359,43 @@ const TeamsPage = () => {
     }
   };
 
+  // Fetch mood time for the selected team
+  const fetchMoodTimeForTeam = async (teamId: string) => {
+    try {
+      const response = await api.get(`/mood/times?teamId=${teamId}`);
+      if (response.status === 200 && response.data.data?.moodTime) {
+        setSavedMoodTime(response.data.data.moodTime);
+      } else {
+        setSavedMoodTime("Not set"); // Default to "Not set" if no mood time is found
+      }
+    } catch (error) {
+      console.error("Error fetching mood time:", error);
+      setSavedMoodTime("Not set"); // Default to "Not set" on error
+    }
+  };
+
+  // Handle team selection
+  const handleTeamSelection = (team: FormTypes) => {
+    setSelectedTeam(team);
+    console.log("teamId:", team.slackChannelId);
+    if (team.slackChannelId) {
+      fetchMoodTimeForTeam(team.slackChannelId); // Fetch mood time for the selected team
+    }
+  };
+
   useEffect(() => {
     dispatch(fetchTeams());
     dispatch(fetchMember());
   }, [dispatch]);
 
   useEffect(() => {
-    const fetchMoodTimes = async () => {
-      const response = await api.get("mood/times");
-      console.log("MoodTimes:", response.data.data[0]);
-      setSavedMoodTime(response.data.data[0]?.moodTime);
-    };
-
     setAvailableMembers(
       members.map((item: { id: string; name: string }) => ({
         id: item.id as string,
         member: item.name,
       }))
     );
-
-    fetchMoodTimes();
   }, [loading, teams, members]);
-
-  // console.log("savedMoodTime", savedMoodTime);
 
   // Format available members for react-select
   const memberOptions =
@@ -437,7 +451,7 @@ const TeamsPage = () => {
                 .map((team) => (
                   <div
                     key={team._id}
-                    onClick={() => setSelectedTeam(team)}
+                    onClick={() => handleTeamSelection(team)}
                     className={`p-4 rounded-lg cursor-pointer transition-colors ${
                       selectedTeam?._id === team._id
                         ? "bg-green-100 border-green-primary"
@@ -462,8 +476,7 @@ const TeamsPage = () => {
                       </p>
                     </div>
                   </div>
-                ))
-                }
+                ))}
           </div>
         </div>
 
@@ -815,18 +828,18 @@ const TeamsPage = () => {
                   {/* Display Saved Mood Time */}
                   <div>
                     <p className="text-sm font-bold">Mood Check-In Time:</p>
-                    {savedMoodTime ? (
+                    {selectedTeam && (
                       <div className="flex items-center gap-2">
                         <p>{savedMoodTime}</p>
-                        <button
-                          onClick={handleDeleteMoodTime}
-                          className="text-red-500 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {savedMoodTime !== "Not set" && (
+                          <button
+                            onClick={handleDeleteMoodTime}
+                            className="text-red-500 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
-                    ) : (
-                      <p>Not set</p>
                     )}
                     <p className="text-xs text-red-600">{moodMsg}</p>
                   </div>
