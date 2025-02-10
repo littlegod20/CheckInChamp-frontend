@@ -90,9 +90,9 @@ export const getTeamsOnly = async () => {
   return await api.get("/teams");
 };
 
-export const deleteTeam = async (teamId: string) => {
-  return await api.delete(`/teams/${teamId}`);
-};
+// export const deleteTeam = async (teamId: string) => {
+//   return await api.delete(`/teams/${teamId}`);
+// };
 
 export const removeMember = async (teamId: string, memberId: string) => {
   return await api.delete(`members/${teamId}/${memberId}`);

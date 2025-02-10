@@ -14,6 +14,7 @@ import { Bar, Line } from "react-chartjs-2";
 import { FrownIcon, MehIcon, SmileIcon } from "lucide-react";
 import CustomHeatmap from "@/components/CustomHeatMap";
 import Header from "@/components/Header";
+import { MoodEntry } from "@/types/MoodTypes";
 
 // Register Chart.js components
 ChartJS.register(
@@ -26,13 +27,7 @@ ChartJS.register(
   Legend
 );
 
-interface MoodEntry {
-  userId: string;
-  date: string;
-  teamName: string;
-  userName: string;
-  mood: "happy" | "neutral" | "sad";
-}
+
 
 type HeatmapCell = {
   x: number;
@@ -47,7 +42,6 @@ const MoodTrackingPage = () => {
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
   const [teams, setTeams] = useState<string[]>([]);
   const [members, setMembers] = useState<string[]>([]);
-  // const [loading, setLoading] = useState<boolean>(true);
 
   // Fetch mood data from the backend
   useEffect(() => {
@@ -147,10 +141,6 @@ const MoodTrackingPage = () => {
       },
     ],
   };
-
-  // if (loading) {
-  //   return <div>Loading...</div>;
-  // }
 
   // Determine chart type based on filters
   const getChartType = () => {
@@ -448,7 +438,7 @@ const MoodTrackingPage = () => {
                     <span className="text-green-600 flex items-center">
                       <SmileIcon className="h-5 w-5 mr-2" />
                       Happy
-                    </span>
+                    </span> 
                   )}
                   {entry.mood === "neutral" && (
                     <span className="text-yellow-600 flex items-center">

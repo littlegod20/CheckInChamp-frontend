@@ -24,7 +24,7 @@ const StandupsPage = () => {
 
   // for standups pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(1);
+  const [limit] = useState(10);
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,

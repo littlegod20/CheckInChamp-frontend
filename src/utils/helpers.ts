@@ -32,6 +32,8 @@ export const calculateOverallParticipationRate = (
     (item) => !item.error && item.participationRate
   );
 
+  console.log("validStandups:", validStandups)
+
   // Extract and convert participation rates to numbers
   const participationRates = validStandups.map((item) =>
     parseFloat(item.participationRate.replace("%", ""))

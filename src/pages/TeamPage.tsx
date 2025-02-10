@@ -7,10 +7,17 @@ import { Check, Loader2, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MultiValue } from "react-select";
 import { useAppDispatch, useAppSelector } from "../hooks/hooks";
-import { fetchTeams, fetchMember } from "../store/store";
+import {
+  fetchTeams,
+  fetchMember,
+  updateTeam,
+  resetUpdateTeamLoading,
+  deleteTeam,
+} from "../store/store";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import CardWithForm from "@/components/CardWithForm";
+import ModalContainer from "@/components/ModalContainer";
 
 const TeamsPage = () => {
   const [selectedTeam, setSelectedTeam] = useState<FormTypes | null>(null);
@@ -19,11 +26,12 @@ const TeamsPage = () => {
   >("members");
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isDelete, setIsDelete] = useState(false);
 
   const dispatch = useAppDispatch();
-  const { teams, members } = useAppSelector((state) => state.app);
-
-  // console.log("members:", members)
+  const { teams, members, loading, error } = useAppSelector(
+    (state) => state.app
+  );
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -32,10 +40,6 @@ const TeamsPage = () => {
   const [availableMembers, setAvailableMembers] = useState<
     { id: string; member: string }[]
   >([{ id: "", member: "" }]);
-
-  const [loading, setLoading] = useState<
-    "loading" | "failed" | "success" | "idle"
-  >("idle");
 
   const [moodTime, setMoodTime] = useState("");
   const [savedMoodTime, setSavedMoodTime] = useState("");
@@ -314,48 +318,27 @@ const TeamsPage = () => {
     );
   };
 
-  const saveTeam = async (team: FormTypes) => {
-    setLoading("loading");
+  const handleUpdateTeam = async () => {
     try {
-      const response = await api.put("/teams/update", team);
-      console.log("updatedTeam:", response.data);
-      if (response.status !== 200) {
-        throw new Error("Could not update team");
+      if (selectedTeam) {
+        await dispatch(updateTeam(selectedTeam)).unwrap(); // unwrapping the thunk to handle errors
+        setTimeout(() => {
+          dispatch(resetUpdateTeamLoading());
+        }, 2000);
       }
-      setLoading("success");
-      setTimeout(() => {
-        setLoading("idle");
-      }, 2000);
     } catch (error) {
-      console.error("Error saving team", error);
-      setLoading("failed");
-      setTimeout(() => {
-        setLoading("idle");
-      }, 2000);
+      console.error("Failed to save team:", error);
     }
   };
 
-  const deleteTeam = async (team: FormTypes) => {
+  const handleDeleteTeam = async (team: FormTypes) => {
     try {
-      console.log("slackChannelId:", team.slackChannelId);
-      const response = await api.delete(`/teams/${team.slackChannelId}`);
-
-      if (response.status !== 200) {
-        throw new Error("Could not delete team");
+      if (team && team.slackChannelId) {
+        await dispatch(deleteTeam(team.slackChannelId)).unwrap();
+        setIsDelete(false);
       }
-      setLoading("success");
-
-      // temporal timeout
-      setTimeout(() => {
-        setLoading("idle");
-      }, 2000); // 2 seconds delay
-
-      console.log("deleted Team:", response.data);
     } catch (error) {
       console.error("Error deleting team", error);
-      setTimeout(() => {
-        setLoading("idle");
-      }, 2000);
     }
   };
 
@@ -395,7 +378,7 @@ const TeamsPage = () => {
         member: item.name,
       }))
     );
-  }, [loading, teams, members]);
+  }, [members]);
 
   // Format available members for react-select
   const memberOptions =
@@ -404,11 +387,6 @@ const TeamsPage = () => {
       value: member.id,
       label: member.member,
     }));
-
-  useEffect(() => {
-    console.log("selected Team members:", selectedTeam?.members);
-    console.log("members:", memberOptions);
-  });
 
   return (
     <div className="p-6 bg-gray-50  text-black-secondary md:h-screen">
@@ -443,6 +421,20 @@ const TeamsPage = () => {
 
           {/* List of teams */}
           <div className="space-y-3 overflow-y-scroll h-96">
+            {loading.teams === "pending" && (
+              <div className="flex-1 flex justify-center items-center h-full">
+                <Loader2
+                  className="animate-spin text-green-primary"
+                  size={30}
+                />
+              </div>
+            )}
+            {loading.teams === "failed" && (
+              <div className="text-red-500">
+                Error: {error}
+                <button onClick={() => dispatch(fetchTeams())}>Retry</button>
+              </div>
+            )}
             {Array.isArray(teams) &&
               teams
                 .filter((team) =>
@@ -487,23 +479,24 @@ const TeamsPage = () => {
               <h2 className="text-xl font-semibold">{selectedTeam.name}</h2>
               <div className="flex space-x-2">
                 <button className="text-gray-400 ">
-                  {loading === "loading" ? (
-                    <Loader2 className="text-yellow-400" />
-                  ) : loading === "success" ? (
+                  {loading.updateTeam === "pending" ? (
+                    <Loader2 className="text-yellow-400 animate-spin" />
+                  ) : loading.updateTeam === "success" ? (
                     <Check className="text-green-600" />
-                  ) : loading === "failed" ? (
+                  ) : loading.updateTeam === "failed" ? (
                     <X className="text-red-600" />
                   ) : (
                     <Save
                       className="h-5 w-5 hover:text-green-secondary"
-                      onClick={() => saveTeam(selectedTeam)}
+                      onClick={handleUpdateTeam}
                     />
                   )}
                 </button>
+
                 <button className="text-gray-400 hover:text-red-500">
                   <Trash2
                     className="h-5 w-5"
-                    onClick={() => deleteTeam(selectedTeam)}
+                    onClick={() => setIsDelete(true)}
                   />
                 </button>
               </div>
@@ -849,6 +842,48 @@ const TeamsPage = () => {
           </div>
         )}
       </div>
+      {isDelete && selectedTeam && (
+        <ModalContainer>
+          <div className="bg-white p-4 w-3/5 md:w-1/3 rounded-md space-y-3 shadow-md">
+            <div className="pb-4">
+              <header className="pb-5 flex justify-between">
+                <div>
+                  <p className="text-red-600 font-semibold">Delete Team</p>
+                  <p className="text-xs font-medium text-gray-500">
+                    Are you sure you want to delete this team?
+                  </p>
+                </div>
+                <X
+                  onClick={() => setIsDelete(false)}
+                  className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                />
+              </header>
+              <p className="capitalize">{selectedTeam?.name}</p>
+            </div>
+            <div className="w-full flex justify-end gap-3">
+              <Button
+                variant="destructive"
+                className={`${
+                  loading.deleteTeam === "pending" ? "opacity-50" : ""
+                }`}
+                onClick={() => handleDeleteTeam(selectedTeam)}
+              >
+                {loading.deleteTeam === "pending" ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  `Yes`
+                )}
+              </Button>
+              <Button
+                className="bg-green-primary hover:bg-green-secondary"
+                onClick={() => setIsDelete(false)}
+              >
+                No
+              </Button>
+            </div>
+          </div>
+        </ModalContainer>
+      )}
       {isOpen && (
         <div>
           <CardWithForm
