@@ -61,9 +61,11 @@ export const deleteTeam = createAsyncThunk(
 
 export const fetchStandups = createAsyncThunk(
   "standups/fetchStandups",
-  async () => {
-    const response = await axios.get("http://localhost:5000/api/standups");
-    console.log("status:", response.data)
+  async ({ page = 1, limit = 10 }: { page?: number; limit?: number }) => {
+    const response = await axios.get("http://localhost:5000/api/standups", {
+      params: { page, limit },
+    });
+    console.log("status:", response.data);
     return response.data;
   }
 );
