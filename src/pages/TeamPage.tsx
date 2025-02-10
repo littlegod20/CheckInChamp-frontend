@@ -23,6 +23,8 @@ const TeamsPage = () => {
   const dispatch = useAppDispatch();
   const { teams, members } = useAppSelector((state) => state.app);
 
+  // console.log("members:", members)
+
   const [searchQuery, setSearchQuery] = useState("");
 
   const [, setTeams] = useState<FormTypes[] | null>(null);
@@ -379,7 +381,7 @@ const TeamsPage = () => {
     fetchMoodTimes();
   }, [loading, teams, members]);
 
-  console.log("savedMoodTime", savedMoodTime);
+  // console.log("savedMoodTime", savedMoodTime);
 
   // Format available members for react-select
   const memberOptions =
@@ -388,6 +390,11 @@ const TeamsPage = () => {
       value: member.id,
       label: member.member,
     }));
+
+  useEffect(() => {
+    console.log("selected Team members:", selectedTeam?.members);
+    console.log("members:", memberOptions);
+  });
 
   return (
     <div className="p-6 bg-gray-50  text-black-secondary md:h-screen">
@@ -455,7 +462,8 @@ const TeamsPage = () => {
                       </p>
                     </div>
                   </div>
-                ))}
+                ))
+                }
           </div>
         </div>
 
@@ -532,18 +540,22 @@ const TeamsPage = () => {
                         (m) => m.id === memberId
                       );
                       return (
-                        <div
-                          key={memberId}
-                          className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
-                        >
-                          <span>{member?.member || "Unknown Member"}</span>
-                          <button
-                            onClick={() => handleRemoveMember(memberId)}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <>
+                          {member?.member && member.id ? (
+                            <div
+                              key={memberId}
+                              className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
+                            >
+                              <span>{member?.member}</span>
+                              <button
+                                onClick={() => handleRemoveMember(memberId)}
+                                className="text-red-500 hover:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : null}
+                        </>
                       );
                     })}
                   </div>
