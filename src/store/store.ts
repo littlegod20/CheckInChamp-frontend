@@ -107,6 +107,33 @@ export const fetchMember = createAsyncThunk("member/fetchMember", async () => {
   return response.data.users;
 });
 
+export const fetchMoodData = createAsyncThunk(
+  "moods/fetchMoodData",
+  async ({
+    team,
+    member,
+    page,
+    limit
+  }: {
+    team: string | undefined;
+    member: string | undefined;
+    page?: number | undefined;
+    limit?: number | undefined
+  }) => {
+    const params = new URLSearchParams();
+
+    if (team && team !== "All Teams") params.append("teamName", team);
+    if (member && member !== "All Members") params.append("userName", member);
+    if (page) params.append("page", String(page));
+    if (limit) params.append("limit", String(limit));
+
+      const response = await axios.get(
+        `http://localhost:5000/api/mood/?${params.toString()}`
+      );
+    return await response.data;
+  }
+);
+
 const appSlice = createSlice({
   name: "app",
   initialState,
@@ -201,6 +228,20 @@ const appSlice = createSlice({
       })
       .addCase(fetchMember.rejected, (state, action) => {
         // state.loading = false;
+        state.error = action.error.message || "Failed to fetch members";
+      })
+
+      // mood data reducers
+      .addCase(fetchMoodData.pending, (state) => {
+        state.loading.moodEntries = "pending";
+        state.error = null;
+      })
+
+      .addCase(fetchMoodData.fulfilled, (state, action) => {
+        state.loading.moodEntries = "success";
+        state.moodEntries = action.payload;
+      })
+      .addCase(fetchMoodData.rejected, (state, action) => {
         state.error = action.error.message || "Failed to fetch members";
       });
   },
