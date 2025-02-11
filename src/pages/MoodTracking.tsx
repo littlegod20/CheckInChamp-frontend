@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,6 +13,10 @@ import { Bar, Line } from "react-chartjs-2";
 import { FrownIcon, MehIcon, SmileIcon } from "lucide-react";
 import CustomHeatmap from "@/components/CustomHeatMap";
 import Header from "@/components/Header";
+import { MoodEntry } from "@/types/MoodTypes";
+import { useAppDispatch } from "@/hooks/hooks";
+import { fetchMember, fetchMoodData, fetchTeams } from "@/store/store";
+import { FormTypes } from "@/types/CardWithFormTypes";
 
 // Register Chart.js components
 ChartJS.register(
@@ -26,14 +29,6 @@ ChartJS.register(
   Legend
 );
 
-interface MoodEntry {
-  userId: string;
-  date: string;
-  teamName: string;
-  userName: string;
-  mood: "happy" | "neutral" | "sad";
-}
-
 type HeatmapCell = {
   x: number;
   y: number;
@@ -41,80 +36,92 @@ type HeatmapCell = {
   mood: "happy" | "neutral" | "sad";
 };
 
+interface Members {
+  name: string;
+  id: string;
+}
+
 const MoodTrackingPage = () => {
   const [selectedTeam, setSelectedTeam] = useState<string>("All Teams");
   const [selectedMember, setSelectedMember] = useState<string>("All Members");
-  const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
-  const [teams, setTeams] = useState<string[]>([]);
-  const [members, setMembers] = useState<string[]>([]);
-  // const [loading, setLoading] = useState<boolean>(true);
+  const [allTeams, setAllTeams] = useState<Partial<FormTypes[]>>([]);
+  const [allMembers, setAllMembers] = useState<Members[]>([]);
+  const [formatMood, setFormatMood] = useState<MoodEntry[]>([]);
 
-  // Fetch mood data from the backend
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(5);
+  const [pagination, setPagination] = useState<{
+    page: number;
+    total: number;
+    totalPages: number;
+  }>({
+    total: 0,
+    page: 1,
+    totalPages: 1,
+  });
+
+  const dispatch = useAppDispatch();
+
+  // Fetch all teams and members on mount
   useEffect(() => {
-    const fetchMoodData = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/mood/", {
-          params: {
-            teamName: selectedTeam === "All Teams" ? undefined : selectedTeam,
-            userName:
-              selectedMember === "All Members" ? undefined : selectedMember,
-          },
-        });
+    dispatch(fetchTeams()).then((action) => {
+      if (fetchTeams.fulfilled.match(action)) {
+        setAllTeams([{ name: "All Teams" }, ...action.payload]);
+      }
+    });
 
-        const { data } = response.data;
+    dispatch(fetchMember()).then((action) => {
+      if (fetchMember.fulfilled.match(action)) {
+        setAllMembers([
+          { name: "All Members", id: "All Members" },
+          ...action.payload,
+        ]);
+      }
+    });
+  }, [dispatch]);
 
-        console.log("mood data:", data);
-
-        // Transform backend data to match frontend format
-        const transformedData = data.map((entry: MoodEntry) => ({
+  // Fetch mood data when filters change
+  useEffect(() => {
+    dispatch(
+      fetchMoodData({
+        team: selectedTeam !== "All Teams" ? selectedTeam : undefined,
+        member: selectedMember !== "All Members" ? selectedMember : undefined,
+        page: currentPage,
+        limit: limit,
+      })
+    ).then((action) => {
+      if (fetchMoodData.fulfilled.match(action)) {
+        console.log("action:", action);
+        const transformedData = action.payload.data.map((entry: MoodEntry) => ({
           date: new Date(entry.date).toISOString().split("T")[0],
           teamName: entry.teamName,
           userName: entry.userName,
           mood: entry.mood,
           userId: entry.userId,
         }));
-
-        setMoodEntries(transformedData);
-
-        // Extract unique teams and members
-        const uniqueTeams = Array.from(
-          new Set(transformedData.map((entry: MoodEntry) => entry.teamName))
-        ) as string[];
-        const uniqueMembers = Array.from(
-          new Set(transformedData.map((entry: MoodEntry) => entry.userName))
-        );
-
-        setTeams(["All Teams", ...uniqueTeams]);
-        setMembers(["All Members", ...(uniqueMembers as string[])]);
-      } catch (error) {
-        console.error("Error fetching mood data:", error);
+        setFormatMood(transformedData);
+        setPagination(action.payload.pagination);
       }
-      // finally {
-      //   setLoading(false);
-      // }
-    };
-
-    fetchMoodData();
-  }, [selectedTeam, selectedMember]);
+    });
+  }, [selectedTeam, selectedMember, dispatch, limit, currentPage]);
 
   // Filtered mood entries
-  const filteredMoodEntries = moodEntries.filter((entry) => {
+  const filteredMoodEntries = formatMood.filter((entry) => {
     // console.log("entry.teamName:", entry.teamName);
     const teamMatch =
       selectedTeam === "All Teams" || entry.teamName === selectedTeam;
     const memberMatch =
       selectedMember === "All Members" || entry.userName === selectedMember;
-    console.log("selectedMember:", selectedMember);
     return teamMatch && memberMatch;
   });
 
   // Mood trends data for the chart
   const moodTrendsData = {
-    labels: Array.from(new Set(moodEntries.map((entry) => entry.date))), // Unique dates
+    labels: Array.from(new Set(formatMood.map((entry) => entry.date))), // Unique dates
     datasets: [
       {
         label: "Happy",
-        data: moodEntries
+        data: formatMood
           .filter((entry) => entry.mood === "happy")
           .reduce((acc, entry) => {
             acc[entry.date] = (acc[entry.date] || 0) + 1;
@@ -125,7 +132,7 @@ const MoodTrackingPage = () => {
       },
       {
         label: "Neutral",
-        data: moodEntries
+        data: formatMood
           .filter((entry) => entry.mood === "neutral")
           .reduce((acc, entry) => {
             acc[entry.date] = (acc[entry.date] || 0) + 1;
@@ -136,7 +143,7 @@ const MoodTrackingPage = () => {
       },
       {
         label: "Sad",
-        data: moodEntries
+        data: formatMood
           .filter((entry) => entry.mood === "sad")
           .reduce((acc, entry) => {
             acc[entry.date] = (acc[entry.date] || 0) + 1;
@@ -147,10 +154,6 @@ const MoodTrackingPage = () => {
       },
     ],
   };
-
-  // if (loading) {
-  //   return <div>Loading...</div>;
-  // }
 
   // Determine chart type based on filters
   const getChartType = () => {
@@ -345,6 +348,14 @@ const MoodTrackingPage = () => {
     }
   };
 
+  // useEffect(() => {
+  //   console.log("formatted:", formatMood);
+  //   console.log("allTeams:", allTeams);
+  //   console.log("allMembers:", allMembers);
+  //   console.log("selected member:", selectedMember);
+  //   console.log("selected team:", selectedTeam);
+  // }, [formatMood, allTeams, allMembers, selectedMember, selectedTeam]);
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
       {/* Header */}
@@ -369,9 +380,9 @@ const MoodTrackingPage = () => {
             onChange={(e) => setSelectedTeam(e.target.value)}
             className="mt-1 block w-full p-2 border border-gray-300 rounded-lg shadow-sm"
           >
-            {teams.map((team) => (
-              <option key={team} value={team}>
-                {team}
+            {allTeams.map((team) => (
+              <option key={team?.name} value={team?.name}>
+                {team?.name}
               </option>
             ))}
           </select>
@@ -391,9 +402,9 @@ const MoodTrackingPage = () => {
             onChange={(e) => setSelectedMember(e.target.value)}
             className="mt-1 block w-full p-2 border border-gray-300 rounded-lg shadow-sm"
           >
-            {members.map((member) => (
-              <option key={member} value={member}>
-                {member}
+            {allMembers.map((member) => (
+              <option key={member.id} value={member.name}>
+                {member.name}
               </option>
             ))}
           </select>
@@ -467,6 +478,28 @@ const MoodTrackingPage = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex justify-between items-center mt-6 text-white">
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-green-primary rounded-lg disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span className="text-black-secondary">
+          Page {pagination?.page} of {pagination?.totalPages}
+        </span>
+        <button
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, pagination.totalPages))
+          }
+          disabled={currentPage === pagination?.totalPages}
+          className="px-4 py-2 bg-green-primary rounded-lg disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
 
       {/* Empty State */}
