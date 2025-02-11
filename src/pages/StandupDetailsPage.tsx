@@ -19,7 +19,7 @@ const StandupDetailsPage = () => {
     : null;
 
   const findMemberName = (member: string) => {
-    return members.find((item) => item.id === member)?.name || "Unknown User";
+    return members.find((item) => item.id === member)?.name || null;
   };
 
   if (!standup) {

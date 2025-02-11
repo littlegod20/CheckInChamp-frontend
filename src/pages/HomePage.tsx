@@ -61,8 +61,6 @@ const HomePage: React.FC = () => {
       .filter((item) => item.slackChannelId === teamId && !item.error)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    console.log("teamsStandups:", teamStandups);
-
     // Map each standup to an object containing a formatted date and a numerical participation rate
     return teamStandups.map((item) => ({
       name: new Date(item.date).toLocaleDateString("en-US", {
@@ -121,8 +119,6 @@ const HomePage: React.FC = () => {
     ? getStandupCompletionData(teams, standups?.statuses as StatusTypes[])
     : [];
 
-  console.log("standupDAta:", standups);
-
   const participationData =
     sortedStandups.length > 0
       ? getParticipationDataForTeam(
@@ -133,7 +129,7 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     dispatch(fetchTeams());
-    dispatch(fetchStandups());
+    dispatch(fetchStandups({})).unwrap();
   }, [dispatch]);
 
   useEffect(() => {

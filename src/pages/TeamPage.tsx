@@ -7,10 +7,17 @@ import { Check, Loader2, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { MultiValue } from "react-select";
 import { useAppDispatch, useAppSelector } from "../hooks/hooks";
-import { fetchTeams, fetchMember } from "../store/store";
+import {
+  fetchTeams,
+  fetchMember,
+  updateTeam,
+  resetUpdateTeamLoading,
+  deleteTeam,
+} from "../store/store";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import CardWithForm from "@/components/CardWithForm";
+import ModalContainer from "@/components/ModalContainer";
 
 const TeamsPage = () => {
   const [selectedTeam, setSelectedTeam] = useState<FormTypes | null>(null);
@@ -19,9 +26,12 @@ const TeamsPage = () => {
   >("members");
 
   const [isOpen, setIsOpen] = useState(false);
+  const [isDelete, setIsDelete] = useState(false);
 
   const dispatch = useAppDispatch();
-  const { teams, members } = useAppSelector((state) => state.app);
+  const { teams, members, loading, error } = useAppSelector(
+    (state) => state.app
+  );
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -30,10 +40,6 @@ const TeamsPage = () => {
   const [availableMembers, setAvailableMembers] = useState<
     { id: string; member: string }[]
   >([{ id: "", member: "" }]);
-
-  const [loading, setLoading] = useState<
-    "loading" | "failed" | "success" | "idle"
-  >("idle");
 
   const [moodTime, setMoodTime] = useState("");
   const [savedMoodTime, setSavedMoodTime] = useState("");
@@ -266,9 +272,9 @@ const TeamsPage = () => {
             text: newQuestion.text,
             type: newQuestion.type,
             options:
-              newQuestion.type === "multiple-choice" ||
+              newQuestion.type === "multiple_choice" ||
               newQuestion.type === "checkbox" ||
-              newQuestion.type === "select" ||
+              newQuestion.type === "single_select" ||
               newQuestion.type === "radio"
                 ? newQuestion.options.map((item) => item.trim())
                 : [],
@@ -283,7 +289,7 @@ const TeamsPage = () => {
     console.log("updated:", updatedTeam);
     setNewQuestion({ text: "", type: "", options: [] });
   };
-  // Remove a question
+  // Remove a questionFile explorer
   const handleRemoveQuestion = (questionId: number) => {
     if (!selectedTeam) return;
 
@@ -312,48 +318,51 @@ const TeamsPage = () => {
     );
   };
 
-  const saveTeam = async (team: FormTypes) => {
-    setLoading("loading");
+  const handleUpdateTeam = async () => {
     try {
-      const response = await api.put("/teams/update", team);
-      console.log("updatedTeam:", response.data);
-      if (response.status !== 200) {
-        throw new Error("Could not update team");
+      if (selectedTeam) {
+        await dispatch(updateTeam(selectedTeam)).unwrap(); // unwrapping the thunk to handle errors
+        setTimeout(() => {
+          dispatch(resetUpdateTeamLoading());
+        }, 2000);
       }
-      setLoading("success");
-      setTimeout(() => {
-        setLoading("idle");
-      }, 2000);
     } catch (error) {
-      console.error("Error saving team", error);
-      setLoading("failed");
-      setTimeout(() => {
-        setLoading("idle");
-      }, 2000);
+      console.error("Failed to save team:", error);
     }
   };
 
-  const deleteTeam = async (team: FormTypes) => {
+  const handleDeleteTeam = async (team: FormTypes) => {
     try {
-      console.log("slackChannelId:", team.slackChannelId);
-      const response = await api.delete(`/teams/${team.slackChannelId}`);
-
-      if (response.status !== 200) {
-        throw new Error("Could not delete team");
+      if (team && team.slackChannelId) {
+        await dispatch(deleteTeam(team.slackChannelId)).unwrap();
+        setIsDelete(false);
       }
-      setLoading("success");
-
-      // temporal timeout
-      setTimeout(() => {
-        setLoading("idle");
-      }, 2000); // 2 seconds delay
-
-      console.log("deleted Team:", response.data);
     } catch (error) {
       console.error("Error deleting team", error);
-      setTimeout(() => {
-        setLoading("idle");
-      }, 2000);
+    }
+  };
+
+  // Fetch mood time for the selected team
+  const fetchMoodTimeForTeam = async (teamId: string) => {
+    try {
+      const response = await api.get(`/mood/times?teamId=${teamId}`);
+      if (response.status === 200 && response.data.data?.moodTime) {
+        setSavedMoodTime(response.data.data.moodTime);
+      } else {
+        setSavedMoodTime("Not set"); // Default to "Not set" if no mood time is found
+      }
+    } catch (error) {
+      console.error("Error fetching mood time:", error);
+      setSavedMoodTime("Not set"); // Default to "Not set" on error
+    }
+  };
+
+  // Handle team selection
+  const handleTeamSelection = (team: FormTypes) => {
+    setSelectedTeam(team);
+    console.log("teamId:", team.slackChannelId);
+    if (team.slackChannelId) {
+      fetchMoodTimeForTeam(team.slackChannelId); // Fetch mood time for the selected team
     }
   };
 
@@ -363,23 +372,13 @@ const TeamsPage = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    const fetchMoodTimes = async () => {
-      const response = await api.get("mood/times");
-      console.log("MoodTimes:", response.data.data[0]);
-      setSavedMoodTime(response.data.data[0]?.moodTime);
-    };
-
     setAvailableMembers(
       members.map((item: { id: string; name: string }) => ({
         id: item.id as string,
         member: item.name,
       }))
     );
-
-    fetchMoodTimes();
-  }, [loading, teams, members]);
-
-  console.log("savedMoodTime", savedMoodTime);
+  }, [members]);
 
   // Format available members for react-select
   const memberOptions =
@@ -422,6 +421,20 @@ const TeamsPage = () => {
 
           {/* List of teams */}
           <div className="space-y-3 overflow-y-scroll h-96">
+            {loading.teams === "pending" && (
+              <div className="flex-1 flex justify-center items-center h-full">
+                <Loader2
+                  className="animate-spin text-green-primary"
+                  size={30}
+                />
+              </div>
+            )}
+            {loading.teams === "failed" && (
+              <div className="text-red-500">
+                Error: {error}
+                <button onClick={() => dispatch(fetchTeams())}>Retry</button>
+              </div>
+            )}
             {Array.isArray(teams) &&
               teams
                 .filter((team) =>
@@ -430,7 +443,7 @@ const TeamsPage = () => {
                 .map((team) => (
                   <div
                     key={team._id}
-                    onClick={() => setSelectedTeam(team)}
+                    onClick={() => handleTeamSelection(team)}
                     className={`p-4 rounded-lg cursor-pointer transition-colors ${
                       selectedTeam?._id === team._id
                         ? "bg-green-100 border-green-primary"
@@ -466,23 +479,24 @@ const TeamsPage = () => {
               <h2 className="text-xl font-semibold">{selectedTeam.name}</h2>
               <div className="flex space-x-2">
                 <button className="text-gray-400 ">
-                  {loading === "loading" ? (
-                    <Loader2 className="text-yellow-400" />
-                  ) : loading === "success" ? (
+                  {loading.updateTeam === "pending" ? (
+                    <Loader2 className="text-yellow-400 animate-spin" />
+                  ) : loading.updateTeam === "success" ? (
                     <Check className="text-green-600" />
-                  ) : loading === "failed" ? (
+                  ) : loading.updateTeam === "failed" ? (
                     <X className="text-red-600" />
                   ) : (
                     <Save
                       className="h-5 w-5 hover:text-green-secondary"
-                      onClick={() => saveTeam(selectedTeam)}
+                      onClick={handleUpdateTeam}
                     />
                   )}
                 </button>
+
                 <button className="text-gray-400 hover:text-red-500">
                   <Trash2
                     className="h-5 w-5"
-                    onClick={() => deleteTeam(selectedTeam)}
+                    onClick={() => setIsDelete(true)}
                   />
                 </button>
               </div>
@@ -532,18 +546,22 @@ const TeamsPage = () => {
                         (m) => m.id === memberId
                       );
                       return (
-                        <div
-                          key={memberId}
-                          className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
-                        >
-                          <span>{member?.member || "Unknown Member"}</span>
-                          <button
-                            onClick={() => handleRemoveMember(memberId)}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <>
+                          {member?.member && member.id ? (
+                            <div
+                              key={memberId}
+                              className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
+                            >
+                              <span>{member?.member}</span>
+                              <button
+                                onClick={() => handleRemoveMember(memberId)}
+                                className="text-red-500 hover:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ) : null}
+                        </>
                       );
                     })}
                   </div>
@@ -680,7 +698,7 @@ const TeamsPage = () => {
                         options={[
                           "Text",
                           "Multiple Choice",
-                          "Select",
+                          "Single Select",
                           "CheckBox",
                           "Radio",
                         ]}
@@ -695,10 +713,10 @@ const TeamsPage = () => {
                       </button>
                     </div>
                     {/* Show options input field when type is multiple_choice */}
-                    {(newQuestion.type === "multiple-choice" ||
+                    {(newQuestion.type === "multiple_choice" ||
                       newQuestion.type === "radio" ||
                       newQuestion.type === "checkbox" ||
-                      newQuestion.type === "select") && (
+                      newQuestion.type === "single_select") && (
                       <div className="flex items-center space-x-4">
                         <input
                           type="text"
@@ -803,18 +821,18 @@ const TeamsPage = () => {
                   {/* Display Saved Mood Time */}
                   <div>
                     <p className="text-sm font-bold">Mood Check-In Time:</p>
-                    {savedMoodTime ? (
+                    {selectedTeam && (
                       <div className="flex items-center gap-2">
                         <p>{savedMoodTime}</p>
-                        <button
-                          onClick={handleDeleteMoodTime}
-                          className="text-red-500 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {savedMoodTime !== "Not set" && (
+                          <button
+                            onClick={handleDeleteMoodTime}
+                            className="text-red-500 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
-                    ) : (
-                      <p>Not set</p>
                     )}
                     <p className="text-xs text-red-600">{moodMsg}</p>
                   </div>
@@ -824,7 +842,57 @@ const TeamsPage = () => {
           </div>
         )}
       </div>
-      {isOpen && <CardWithForm />}
+      {isDelete && selectedTeam && (
+        <ModalContainer>
+          <div className="bg-white p-4 w-3/5 md:w-1/3 rounded-md space-y-3 shadow-md">
+            <div className="pb-4">
+              <header className="pb-5 flex justify-between">
+                <div>
+                  <p className="text-red-600 font-semibold">Delete Team</p>
+                  <p className="text-xs font-medium text-gray-500">
+                    Are you sure you want to delete this team?
+                  </p>
+                </div>
+                <X
+                  onClick={() => setIsDelete(false)}
+                  className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                />
+              </header>
+              <p className="capitalize">{selectedTeam?.name}</p>
+            </div>
+            <div className="w-full flex justify-end gap-3">
+              <Button
+                variant="destructive"
+                className={`${
+                  loading.deleteTeam === "pending" ? "opacity-50" : ""
+                }`}
+                onClick={() => handleDeleteTeam(selectedTeam)}
+              >
+                {loading.deleteTeam === "pending" ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  `Yes`
+                )}
+              </Button>
+              <Button
+                className="bg-green-primary hover:bg-green-secondary"
+                onClick={() => setIsDelete(false)}
+              >
+                No
+              </Button>
+            </div>
+          </div>
+        </ModalContainer>
+      )}
+      {isOpen && (
+        <div>
+          <CardWithForm
+            title="Create A Team"
+            description="Create and configure your team's standups"
+            onCancel={() => setIsOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };

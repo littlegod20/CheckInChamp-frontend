@@ -22,6 +22,15 @@ const StandupsPage = () => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedStatus, setSelectedStatus] = useState<string>("All Statuses");
 
+  // for standups pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    totalPages: 1,
+  });
+
   const [selectedMember, setSelectedMember] = useState<string>("All Members"); // Filter by member
 
   const { standups, teams, members } = useAppSelector((state) => state.app);
@@ -49,8 +58,8 @@ const StandupsPage = () => {
       const teamObj = teams.find(
         (team) => team.slackChannelId === record.slackChannelId
       );
-      console.log("teamse444:", teams);
-      console.log("teamObj:", teamObj);
+      // console.log("teamse444:", teams);
+      // console.log("teamObj:", teamObj);
       const totalMembers = teamObj ? teamObj.members.length : 0;
 
       return {
@@ -100,10 +109,16 @@ const StandupsPage = () => {
   const statuses = ["All Statuses", "Completed", "Pending"];
 
   useEffect(() => {
-    dispatch(fetchStandups());
+    dispatch(fetchStandups({ page: currentPage, limit }))
+      .unwrap()
+      .then((data) => {
+        setPagination(data.pagination);
+      });
     dispatch(fetchTeams());
     dispatch(fetchMember());
-  }, []);
+  }, [currentPage, limit, dispatch]);
+
+  console.log("pagingations:", pagination.page, pagination.totalPages)
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
@@ -270,6 +285,28 @@ const StandupsPage = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex justify-between items-center mt-6 text-white">
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-green-primary rounded-lg disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span className="text-black-secondary">
+          Page {pagination.page} of {pagination.totalPages}
+        </span>
+        <button
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, pagination.totalPages))
+          }
+          disabled={currentPage === pagination.totalPages}
+          className="px-4 py-2 bg-green-primary rounded-lg disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
 
       {/* Empty State */}
