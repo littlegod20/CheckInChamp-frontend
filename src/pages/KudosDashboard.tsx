@@ -2,19 +2,11 @@ import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
 import "../styles/KudosDashboard.css";
 import Header from "@/components/Header";
-import { fetchKudos } from "@/store/store";
+import { fetchKudos, fetchLeaderBoard } from "@/store/store";
 import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
 import Pagination from "@/components/Pagination";
-import { getKudosLeaderboard } from "@/services/api";
-
-interface LeaderboardEntry {
-  userId: string;
-  name: string;
-  kudosCount: number;
-}
 
 const KudosDashboard = () => {
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -30,7 +22,7 @@ const KudosDashboard = () => {
   const categories = ["teamwork", "creativity", "leadership"];
 
   const dispatch = useAppDispatch();
-  const { kudos } = useAppSelector((state) => state.app);
+  const { kudos, leaderBoard } = useAppSelector((state) => state.app);
 
   useEffect(() => {
     dispatch(fetchKudos({ page: currentPage, limit }))
@@ -40,24 +32,16 @@ const KudosDashboard = () => {
       });
   }, [dispatch, currentPage, limit]);
 
+
   useEffect(() => {
-    fetchLeaderboard();
+    dispatch(fetchLeaderBoard());
   }, []);
 
   useEffect(() => {
     console.log("kudos data:", kudos);
     console.log("pagination:", pagination);
-  }, [kudos, pagination]);
-
-  const fetchLeaderboard = async () => {
-    try {
-      const response = await getKudosLeaderboard();
-      setLeaderboard(response.data);
-      console.log("leaderboard:", response.data);
-    } catch (error) {
-      console.error("Error fetching leaderboard:", error);
-    }
-  };
+    console.log("leaderboard:", leaderBoard);
+  }, [kudos, pagination, leaderBoard]);
 
   // Memoized Filtering Logic (Optimized)
   const filteredKudos = useMemo(() => {
@@ -96,8 +80,8 @@ const KudosDashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {leaderboard.length > 0 ? (
-              leaderboard.map((entry, index) => (
+            {leaderBoard && leaderBoard.length > 0 ? (
+              leaderBoard.map((entry, index) => (
                 <tr key={entry.userId}>
                   <td>
                     {index === 0

@@ -32,6 +32,13 @@ export interface Pagination {
   totalPages: number;
 }
 
+interface LeaderboardTypes {
+  rank: number;
+  userId: string;
+  name: string;
+  kudosCount: number;
+}
+
 export interface AppState {
   teams: FormTypes[];
   standups: StandupResponseTypes | null;
@@ -41,6 +48,7 @@ export interface AppState {
     kudos: KudosTypes[];
     pagination: Pagination | null;
   };
+  leaderBoard: LeaderboardTypes[] | null;
   loading: {
     teams: LoadingTypes;
     updateTeam: LoadingTypes;
@@ -49,6 +57,7 @@ export interface AppState {
     moodEntries: LoadingTypes;
     members: LoadingTypes;
     kudos: LoadingTypes;
+    leaderBoard: LoadingTypes;
   };
   error: string | null;
 }
@@ -62,6 +71,7 @@ const initialState: AppState = {
     kudos: [],
     pagination: null,
   },
+  leaderBoard: null,
   loading: {
     teams: "idle",
     updateTeam: "idle",
@@ -70,6 +80,7 @@ const initialState: AppState = {
     moodEntries: "idle",
     members: "idle",
     kudos: "idle",
+    leaderBoard: "idle",
   },
   error: null,
 };
@@ -199,6 +210,17 @@ export const fetchKudos = createAsyncThunk(
   }
 );
 
+export const fetchLeaderBoard = createAsyncThunk(
+  "kudos/fetchLeaderBoard",
+  async () => {
+    const response = await axios.get(
+      `http://localhost:5000/api/kudos/leaderboard`
+    );
+
+    return await response.data;
+  }
+);
+
 const appSlice = createSlice({
   name: "app",
   initialState,
@@ -319,6 +341,15 @@ const appSlice = createSlice({
       })
       .addCase(fetchKudos.rejected, (state, action) => {
         state.error = action.error.message || "Failed to fetch kudos";
+      })
+      .addCase(fetchLeaderBoard.pending, (state) => {
+        state.loading.leaderBoard = "pending";
+      })
+      .addCase(fetchLeaderBoard.fulfilled, (state, action) => {
+        state.leaderBoard = action.payload;
+      })
+      .addCase(fetchLeaderBoard.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to fetch leader board";
       });
   },
 });
