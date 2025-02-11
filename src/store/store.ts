@@ -15,11 +15,32 @@ import { api } from "@/services/api";
 
 type LoadingTypes = "idle" | "pending" | "success" | "failed";
 
-interface AppState {
+export interface KudosTypes {
+  _id: string;
+  giverId: string;
+  receiverId: string;
+  category: string;
+  reason: string;
+  teamId: string;
+  timestamp: string;
+}
+
+export interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AppState {
   teams: FormTypes[];
   standups: StandupResponseTypes | null;
   moodEntries: MoodEntry[];
   members: { id: string; name: string }[];
+  kudos: {
+    kudos: KudosTypes[];
+    pagination: Pagination | null;
+  };
   loading: {
     teams: LoadingTypes;
     updateTeam: LoadingTypes;
@@ -27,6 +48,7 @@ interface AppState {
     standups: LoadingTypes;
     moodEntries: LoadingTypes;
     members: LoadingTypes;
+    kudos: LoadingTypes;
   };
   error: string | null;
 }
@@ -36,6 +58,10 @@ const initialState: AppState = {
   standups: null,
   moodEntries: [],
   members: [],
+  kudos: {
+    kudos: [],
+    pagination: null,
+  },
   loading: {
     teams: "idle",
     updateTeam: "idle",
@@ -43,6 +69,7 @@ const initialState: AppState = {
     standups: "idle",
     moodEntries: "idle",
     members: "idle",
+    kudos: "idle",
   },
   error: null,
 };
@@ -113,12 +140,12 @@ export const fetchMoodData = createAsyncThunk(
     team,
     member,
     page,
-    limit
+    limit,
   }: {
     team: string | undefined;
     member: string | undefined;
     page?: number | undefined;
-    limit?: number | undefined
+    limit?: number | undefined;
   }) => {
     const params = new URLSearchParams();
 
@@ -127,9 +154,47 @@ export const fetchMoodData = createAsyncThunk(
     if (page) params.append("page", String(page));
     if (limit) params.append("limit", String(limit));
 
-      const response = await axios.get(
-        `http://localhost:5000/api/mood/?${params.toString()}`
-      );
+    const response = await axios.get(
+      `http://localhost:5000/api/mood/?${params.toString()}`
+    );
+    return await response.data;
+  }
+);
+
+export const fetchKudos = createAsyncThunk(
+  "kudos/fetchKudos",
+  async ({
+    teamMember,
+    category,
+    startDate,
+    endDate,
+    limit,
+    page,
+  }: {
+    teamMember?: string;
+    category?: string;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+    page?: number;
+  }) => {
+    const params = new URLSearchParams();
+
+    if (teamMember) params.append("teamMember", teamMember);
+    if (category) params.append("category", category);
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+    if (limit) params.append("limit", String(limit));
+    if (page) params.append("page", String(page));
+
+    console.log("params:", params);
+
+    const response = await axios.get(
+      `http://localhost:5000/api/kudos/?${params.toString()}`
+    );
+
+    console.log("response from kudos:", response.data);
+
     return await response.data;
   }
 );
@@ -236,13 +301,24 @@ const appSlice = createSlice({
         state.loading.moodEntries = "pending";
         state.error = null;
       })
-
       .addCase(fetchMoodData.fulfilled, (state, action) => {
         state.loading.moodEntries = "success";
         state.moodEntries = action.payload;
       })
       .addCase(fetchMoodData.rejected, (state, action) => {
         state.error = action.error.message || "Failed to fetch members";
+      })
+
+      // kudos data reducers.
+      .addCase(fetchKudos.pending, (state) => {
+        state.loading.kudos = "pending";
+        state.error = null;
+      })
+      .addCase(fetchKudos.fulfilled, (state, action) => {
+        state.kudos = action.payload;
+      })
+      .addCase(fetchKudos.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to fetch kudos";
       });
   },
 });

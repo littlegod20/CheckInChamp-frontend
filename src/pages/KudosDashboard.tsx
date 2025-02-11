@@ -1,19 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
-import { getKudos, getKudosLeaderboard } from "../services/api";
 import { format } from "date-fns";
 import "../styles/KudosDashboard.css";
 import Header from "@/components/Header";
-
-interface Kudos {
-  _id: string;
-  // giver: { id: string; name: string };
-  // receiver: { id: string; name: string };
-  giverId: string;
-  receiverId: string;
-  category: string;
-  reason: string;
-  timestamp: string;
-}
+import { fetchKudos } from "@/store/store";
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
+import Pagination from "@/components/Pagination";
+import { getKudosLeaderboard } from "@/services/api";
 
 interface LeaderboardEntry {
   userId: string;
@@ -22,34 +14,46 @@ interface LeaderboardEntry {
 }
 
 const KudosDashboard = () => {
-  const [kudos, setKudos] = useState<Kudos[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedUser, setSelectedUser] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
-  const [visibleCount, setVisibleCount] = useState<number>(10);
+
+  const [limit] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    totalPages: 1,
+  });
 
   const categories = ["teamwork", "creativity", "leadership"];
 
+  const dispatch = useAppDispatch();
+  const { kudos } = useAppSelector((state) => state.app);
+
   useEffect(() => {
-    fetchKudos();
+    dispatch(fetchKudos({ page: currentPage, limit }))
+      .unwrap()
+      .then((data) => {
+        setPagination(data.pagination);
+      });
+  }, [dispatch, currentPage, limit]);
+
+  useEffect(() => {
     fetchLeaderboard();
   }, []);
 
-  const fetchKudos = async () => {
-    try {
-      const response = await getKudos();
-      setKudos(response.data);
-    } catch (error) {
-      console.error("Error fetching kudos:", error);
-    }
-  };
+  useEffect(() => {
+    console.log("kudos data:", kudos);
+    console.log("pagination:", pagination);
+  }, [kudos, pagination]);
 
   const fetchLeaderboard = async () => {
     try {
       const response = await getKudosLeaderboard();
       setLeaderboard(response.data);
-      console.log("leaderboard:", response.data)
+      console.log("leaderboard:", response.data);
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
     }
@@ -57,20 +61,17 @@ const KudosDashboard = () => {
 
   // Memoized Filtering Logic (Optimized)
   const filteredKudos = useMemo(() => {
-    return kudos.filter((k) => {
+    return kudos.kudos.filter((k) => {
       const matchesCategory = selectedCategory
         ? k.category === selectedCategory
         : true;
-      const matchesUser = selectedUser
-        ? k.giverId ||
-          k.receiverId
-        : true;
+      const matchesUser = selectedUser ? k.giverId || k.receiverId : true;
       const matchesDate = selectedDate
         ? format(new Date(k.timestamp), "yyyy-MM-dd") === selectedDate
         : true;
       return matchesCategory && matchesUser && matchesDate;
     });
-  }, [kudos, selectedCategory, selectedUser, selectedDate]);
+  }, [kudos.kudos, selectedCategory, selectedUser, selectedDate]);
 
   const resetFilters = () => {
     setSelectedCategory("");
@@ -78,8 +79,6 @@ const KudosDashboard = () => {
     setSelectedDate("");
   };
 
-  // Display only a limited number of kudos
-  const visibleKudos = filteredKudos.slice(0, visibleCount);
   return (
     <div className="flex text-black-primary w-full flex-col p-6 ">
       {/* <div className="bg-white "> */}
@@ -191,17 +190,14 @@ const KudosDashboard = () => {
           )}
         </tbody>
       </table>
-      {/* "Load More" Button */}
-      {visibleKudos.length < filteredKudos.length && (
-        <button
-          className="load-more-btn"
-          onClick={() => setVisibleCount(visibleCount + 10)}
-        >
-          Load More
-        </button>
-      )}
+      <Pagination
+        currentPage={currentPage}
+        total={pagination.total}
+        onCurrentPage={setCurrentPage}
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+      />
     </div>
-    // </div>
   );
 };
 
