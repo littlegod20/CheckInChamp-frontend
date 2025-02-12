@@ -12,6 +12,7 @@ import {
 import { StandupResponseTypes } from "@/types/StandupResponseTypes";
 import { MoodEntry } from "@/types/MoodTypes";
 import { api } from "@/services/api";
+import { AnalyticsDataTypes } from "@/types/AnalyticsDataTypes";
 
 type LoadingTypes = "idle" | "pending" | "success" | "failed";
 
@@ -77,6 +78,7 @@ export interface AppState {
   };
   leaderBoard: LeaderboardTypes[] | null;
   polls: PollState | null;
+  masterAnalytics: AnalyticsDataTypes | null;
   loading: {
     teams: LoadingTypes;
     updateTeam: LoadingTypes;
@@ -87,6 +89,7 @@ export interface AppState {
     kudos: LoadingTypes;
     leaderBoard: LoadingTypes;
     polls: LoadingTypes;
+    masterAnalytics: LoadingTypes;
   };
   error: string | null;
 }
@@ -102,6 +105,7 @@ const initialState: AppState = {
   },
   leaderBoard: null,
   polls: null,
+  masterAnalytics: null,
   loading: {
     teams: "idle",
     updateTeam: "idle",
@@ -112,6 +116,7 @@ const initialState: AppState = {
     kudos: "idle",
     leaderBoard: "idle",
     polls: "idle",
+    masterAnalytics: "idle",
   },
   error: null,
 };
@@ -281,6 +286,34 @@ export const fetchPolls = createAsyncThunk(
   }
 );
 
+// async thunk for fetching analytics data
+export const fetchAnalytics = createAsyncThunk(
+  "analytics/fetchAnalytics",
+  async (
+    {
+      team,
+      startDate,
+      endDate,
+    }: { team?: string; startDate?: string; endDate?: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await api.get("/master/analytics", {
+        params: {
+          team: team === "All Teams" ? undefined : team,
+          startDate,
+          endDate,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Failed to fetch analytics"
+      );
+    }
+  }
+);
+
 const appSlice = createSlice({
   name: "app",
   initialState,
@@ -432,6 +465,21 @@ const appSlice = createSlice({
       })
       .addCase(fetchPolls.rejected, (state, action) => {
         state.loading.polls = "failed";
+        state.error = action.error.message || "Failed to fetch polls data";
+      })
+
+      // master analytics reducers.
+      .addCase(fetchAnalytics.pending, (state) => {
+        state.loading.masterAnalytics = "pending";
+        state.error = null;
+      })
+      .addCase(fetchAnalytics.fulfilled, (state, action) => {
+        state.loading.masterAnalytics = "success";
+        state.masterAnalytics = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchAnalytics.rejected, (state, action) => {
+        state.loading.masterAnalytics = "failed";
         state.error = action.error.message || "Failed to fetch polls data";
       });
   },

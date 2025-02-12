@@ -34,7 +34,7 @@ export const calculateOverallParticipationRate = (
     (item) => !item.error && item.participationRate
   );
 
-  console.log("validStandups:", validStandups)
+  console.log("validStandups:", validStandups);
 
   // Extract and convert participation rates to numbers
   const participationRates = validStandups.map((item) =>
@@ -81,12 +81,11 @@ export const getPendingRemindersCount = (teams: Array<FormTypes>) => {
   return pendingReminders.length;
 };
 
-
 export const useMemberResolver = () => {
-  const {members} = useAppSelector((state) => state.app);
+  const { members } = useAppSelector((state) => state.app);
 
   const resolveMemberName = (slackId: string): string => {
-    const member = members.find((m: Member) => m.id === slackId)
+    const member = members.find((m: Member) => m.id === slackId);
     return member ? member.name : "Unknown Member";
   };
 

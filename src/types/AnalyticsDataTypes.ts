@@ -26,6 +26,10 @@ export interface AnalyticsDataTypes {
     given: number;
     topReceiver: { _id: string; count: 2 }[];
     topCategory: { _id: string; count: 2 }[];
+    trends?: {
+      _id:string;
+      count:number
+    }[];
   };
   polls: {
     total: { total: number }[];

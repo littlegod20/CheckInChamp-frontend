@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -26,6 +26,14 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
 import { AnalyticsDataTypes } from "@/types/AnalyticsDataTypes";
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
+import { fetchAnalytics } from "@/store/store";
+
+import { jsPDF } from "jspdf";
+import { saveAs } from "file-saver";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Register Chart.js components
 ChartJS.register(
@@ -51,6 +59,19 @@ const MasterAnalyticsPage = () => {
   );
   const [teams, setTeams] = useState<string[]>([]);
 
+  const [exportFormat, setExportFormat] = useState<"pdf" | "csv">("pdf");
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>([
+    "standups",
+    "moods",
+    "kudos",
+    "polls",
+  ]);
+
+  const chartRef = useRef<ChartJS>(null);
+
+  const { masterAnalytics } = useAppSelector((state) => state.app);
+  const dispatch = useAppDispatch();
+
   // Fetch teams and analytics data
   useEffect(() => {
     const fetchData = async () => {
@@ -62,28 +83,29 @@ const MasterAnalyticsPage = () => {
           ...teamsRes.data.map((t: { name: string }) => t.name),
         ];
         setTeams(teamNames);
-
-        // Fetch analytics data
-        const analyticsRes = await api.get("/master/analytics", {
-          params: {
-            team: selectedTeam === "All Teams" ? undefined : selectedTeam,
-            startDate: dateRange.start,
-            endDate: dateRange.end,
-          },
-        });
-
-        setAnalyticsData(analyticsRes.data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
 
     fetchData();
-  }, [selectedTeam, dateRange.start, dateRange.end]);
+  }, [selectedTeam]);
 
+  // fetching master analytics
   useEffect(() => {
-    console.log("analytics data:", analyticsData);
-  }, [analyticsData]);
+    dispatch(
+      fetchAnalytics({
+        team: selectedTeam === "All Teams" ? undefined : selectedTeam,
+        startDate: dateRange.start,
+        endDate: dateRange.end,
+      })
+    );
+  }, [dispatch, selectedTeam, dateRange.end, dateRange.start]);
+
+  // setting master analytics
+  useEffect(() => {
+    setAnalyticsData(masterAnalytics);
+  }, [masterAnalytics]);
 
   // Format data for charts
   const combinedTrendsData = {
@@ -167,7 +189,152 @@ const MasterAnalyticsPage = () => {
     ],
   };
 
+  const handleExport = async () => {
+    try {
+      const response = await api.get("/analytics/export", {
+        params: {
+          team: selectedTeam === "All Teams" ? undefined : selectedTeam,
+          startDate: dateRange.start,
+          endDate: dateRange.end,
+          metrics: selectedMetrics.join(","),
+        },
+        responseType: "blob",
+      });
+
+      const filename = `Analytics-Report-${new Date().toISOString()}.${exportFormat}`;
+      saveAs(new Blob([response.data]), filename);
+    } catch (error) {
+      console.error("Export failed:", error);
+    }
+  };
+
+  const generateCustomReport = () => {
+    const doc = new jsPDF();
+
+    // Add report title
+    doc.setFontSize(20);
+    doc.text("Custom Analytics Report", 15, 20);
+
+    // Add filters info
+    doc.setFontSize(12);
+    doc.text(`Team: ${selectedTeam}`, 15, 30);
+    doc.text(`Date Range: ${dateRange.start} to ${dateRange.end}`, 15, 35);
+
+    // Add metrics section
+    doc.setFontSize(14);
+    doc.text("Selected Metrics:", 15, 45);
+    selectedMetrics.forEach((metric, index) => {
+      doc.text(`${index + 1}. ${metric}`, 20, 50 + index * 5);
+    });
+
+    // Add simple chart (you can add more complex charts using chart images)
+    if (chartRef.current?.canvas) {
+      doc.addImage(chartRef.current.canvas, "PNG", 15, 100, 180, 80);
+    }
+
+    doc.save(`custom-report-${Date.now()}.pdf`);
+  };
+
   const recentActivities = analyticsData?.recentActivities;
+
+  const reportMetrics = [
+    { id: "standups", label: "Standups" },
+    { id: "moods", label: "Mood Trends" },
+    { id: "kudos", label: "Kudos Distribution" },
+    { id: "polls", label: "Poll Participation" },
+  ];
+
+  // Performance Data
+  const performanceData = {
+    standupCompletion: {
+      labels: ["Completed", "Pending"],
+      datasets: [
+        {
+          label: "Standups",
+          data: [
+            analyticsData?.standups.completed || 0,
+            analyticsData?.standups.pending || 0,
+          ],
+          backgroundColor: ["#10B981", "#3B82F6"],
+        },
+      ],
+    },
+    moodDistribution: {
+      labels: ["Happy", "Neutral", "Sad"],
+      datasets: [
+        {
+          data: [
+            analyticsData?.moods.happy || 0,
+            analyticsData?.moods.neutral || 0,
+            analyticsData?.moods.sad || 0,
+          ],
+          backgroundColor: ["#10B981", "#F59E0B", "#EF4444"],
+        },
+      ],
+    },
+  };
+
+  // Engagement Data
+  const engagementData = {
+    kudosActivity: {
+      labels:
+        analyticsData?.standups.trends.map((t) =>
+          new Date(t._id).toLocaleDateString("en-US", { weekday: "short" })
+        ) || [],
+      datasets: [
+        {
+          label: "Kudos Given",
+          data: analyticsData?.kudos.trends || [],
+          borderColor: "#8B5CF6",
+          backgroundColor: "#8B5CF6",
+        },
+      ],
+    },
+    pollParticipation: {
+      labels: analyticsData?.polls.mostPopular.map((p) => p._id) || [],
+      datasets: [
+        {
+          label: "Votes",
+          data: analyticsData?.polls.mostPopular.map((p) => p.count) || [],
+          backgroundColor: "#F59E0B",
+        },
+      ],
+    },
+  };
+
+  // // Trends Data
+  // const trendsData = {
+  //   labels:
+  //     analyticsData?.standups.trends.map((t) =>
+  //       new Date(t._id).toLocaleDateString("en-US", {
+  //         month: "short",
+  //         day: "numeric",
+  //       })
+  //     ) || [],
+  //   datasets: [
+  //     {
+  //       label: "Standups Completed",
+  //       data:
+  //         analyticsData?.standups.trends.map((t) => t.completedStandups) || [],
+  //       borderColor: "#3B82F6",
+  //       backgroundColor: "#3B82F6",
+  //     },
+  //     {
+  //       label: "Happy Moods",
+  //       data:
+  //         analyticsData?.standups.trends.map((t) => t.moodDistribution.happy) ||
+  //         [],
+  //       borderColor: "#10B981",
+  //       backgroundColor: "#10B981",
+  //     },
+  //     {
+  //       label: "Kudos Given",
+  //       data: analyticsData?.kudos.trends || [],
+  //       borderColor: "#8B5CF6",
+  //       backgroundColor: "#8B5CF6",
+  //     },
+  //   ],
+  // };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
@@ -176,10 +343,22 @@ const MasterAnalyticsPage = () => {
         title="Master Analytics"
         description="Comprehensive insights across all team activities"
         Button={
-          <Button className="bg-green-primary text-white px-4 py-2 rounded-lg hover:bg-green-secondary flex items-center">
-            <ArrowDown01Icon className="h-5 w-5 mr-2" />
-            Export Report
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              className="bg-green-primary text-white px-4 py-2 rounded-lg hover:bg-green-secondary flex items-center"
+              onClick={handleExport}
+            >
+              <ArrowDown01Icon className="h-5 w-5 mr-2" />
+              Export Report
+            </Button>
+            <Button
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
+              onClick={generateCustomReport}
+            >
+              <ChartBarIcon className="h-5 w-5 mr-2" />
+              Generate Custom
+            </Button>
+          </div>
         }
       />
 
@@ -343,6 +522,7 @@ const MasterAnalyticsPage = () => {
           <h3 className="text-lg font-semibold mb-4">Activity Trends</h3>
           <div className="h-64">
             <Chart
+              ref={chartRef}
               type="bar"
               data={combinedTrendsData}
               options={{
@@ -362,6 +542,128 @@ const MasterAnalyticsPage = () => {
             <Line data={comparisonData} options={{ responsive: true }} />
           </div>
         </div>
+      </div>
+
+      {/* Custom Reports Section */}
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <h3 className="text-lg font-semibold mb-4">
+          Custom Report Configuration
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {reportMetrics.map((metric) => (
+            <div key={metric.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={metric.id}
+                checked={selectedMetrics.includes(metric.id)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedMetrics([...selectedMetrics, metric.id]);
+                  } else {
+                    setSelectedMetrics(
+                      selectedMetrics.filter((m) => m !== metric.id)
+                    );
+                  }
+                }}
+              />
+              <Label htmlFor={metric.id}>{metric.label}</Label>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 flex gap-4">
+          <select
+            value={exportFormat}
+            onChange={(e) => setExportFormat(e.target.value as "pdf" | "csv")}
+            className="p-2 border rounded-lg"
+          >
+            <option value="pdf">PDF</option>
+            <option value="csv">CSV</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Team Insights Section */}
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <h3 className="text-lg font-semibold mb-4">Team Insights</h3>
+        <Tabs defaultValue="performance">
+          <TabsList className="grid grid-cols-3">
+            <TabsTrigger value="performance">Performance</TabsTrigger>
+            <TabsTrigger value="engagement">Engagement</TabsTrigger>
+            <TabsTrigger value="trends">Trends</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="performance">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4">
+                <h4 className="font-medium mb-2">Standup Completion Rate</h4>
+                <div className="h-48">
+                  <Chart
+                    type="bar"
+                    data={performanceData.standupCompletion}
+                    options={{ responsive: true }}
+                  />
+                </div>
+              </div>
+              <div className="p-4">
+                <h4 className="font-medium mb-2">Mood Distribution</h4>
+                <div className="h-48">
+                  <Chart
+                    type="pie"
+                    data={performanceData.moodDistribution}
+                    options={{ responsive: true }}
+                  />
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="engagement">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4">
+                <h4 className="font-medium mb-2">Kudos Given/Received</h4>
+                <div className="h-48">
+                  <Chart
+                    type="line"
+                    data={engagementData.kudosActivity}
+                    options={{ responsive: true }}
+                  />
+                </div>
+              </div>
+              <div className="p-4">
+                <h4 className="font-medium mb-2">Poll Participation</h4>
+                <div className="h-48">
+                  <Chart
+                    type="bar"
+                    data={engagementData.pollParticipation}
+                    options={{ responsive: true }}
+                  />
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="trends">
+            <div className="p-4">
+              <h4 className="font-medium mb-2">Activity Trends Over Time</h4>
+              <div className="h-64">
+                {/* <Chart
+                  type="line"
+                  data={trendsData}
+                  options={{
+                    responsive: true,
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        ticks: {
+                          stepSize: 1,
+                        },
+                      },
+                    },
+                  }}
+                /> */}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Recent Activity */}
