@@ -26,6 +26,8 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
 import { AnalyticsDataTypes } from "@/types/AnalyticsDataTypes";
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
+import { fetchAnalytics } from "@/store/store";
 
 // Register Chart.js components
 ChartJS.register(
@@ -51,6 +53,9 @@ const MasterAnalyticsPage = () => {
   );
   const [teams, setTeams] = useState<string[]>([]);
 
+  const { masterAnalytics } = useAppSelector((state) => state.app);
+  const dispatch = useAppDispatch();
+
   // Fetch teams and analytics data
   useEffect(() => {
     const fetchData = async () => {
@@ -62,28 +67,28 @@ const MasterAnalyticsPage = () => {
           ...teamsRes.data.map((t: { name: string }) => t.name),
         ];
         setTeams(teamNames);
-
-        // Fetch analytics data
-        const analyticsRes = await api.get("/master/analytics", {
-          params: {
-            team: selectedTeam === "All Teams" ? undefined : selectedTeam,
-            startDate: dateRange.start,
-            endDate: dateRange.end,
-          },
-        });
-
-        setAnalyticsData(analyticsRes.data);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
 
     fetchData();
-  }, [selectedTeam, dateRange.start, dateRange.end]);
+  }, [selectedTeam]);
 
   useEffect(() => {
-    console.log("analytics data:", analyticsData);
-  }, [analyticsData]);
+    dispatch(
+      fetchAnalytics({
+        team: selectedTeam === "All Teams" ? undefined : selectedTeam,
+        startDate: dateRange.start,
+        endDate: dateRange.end,
+      })
+    );
+  }, [dispatch, selectedTeam, dateRange.end, dateRange.start]);
+
+  useEffect(() => {
+    setAnalyticsData(masterAnalytics);
+    console.log("analytics data:", masterAnalytics);
+  }, [masterAnalytics]);
 
   // Format data for charts
   const combinedTrendsData = {
