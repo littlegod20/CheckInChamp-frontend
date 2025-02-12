@@ -480,7 +480,7 @@ const appSlice = createSlice({
       })
       .addCase(fetchAnalytics.rejected, (state, action) => {
         state.loading.masterAnalytics = "failed";
-        state.error = action.payload as string;
+        state.error = action.error.message || "Failed to fetch polls data";
       });
   },
 });
