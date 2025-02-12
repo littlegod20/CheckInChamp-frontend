@@ -118,7 +118,7 @@ const StandupsPage = () => {
     dispatch(fetchMember());
   }, [currentPage, limit, dispatch]);
 
-  console.log("pagingations:", pagination.page, pagination.totalPages)
+  console.log("pagingations:", pagination.page, pagination.totalPages);
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">

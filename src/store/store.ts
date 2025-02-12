@@ -25,11 +25,45 @@ export interface KudosTypes {
   timestamp: string;
 }
 
+export interface PollVotes {
+  username: string;
+  selectedOptions: string[];
+  scaleValue: number;
+  timestamp: string;
+}
+
+export interface PollTypes {
+  _id: string;
+  teamName: string;
+  question: string;
+  options: string[];
+  type: string; //"single", "multiple", "scale"
+  createdBy: string;
+  votes: PollVotes[];
+  anonymous: boolean;
+  channelId: string;
+  createdAt: string;
+}
+
+export interface PollState {
+  polls: PollTypes[];
+  page: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface Pagination {
   total: number;
   page: number;
   limit: number;
   totalPages: number;
+}
+
+interface LeaderboardTypes {
+  rank: number;
+  userId: string;
+  name: string;
+  kudosCount: number;
 }
 
 export interface AppState {
@@ -41,6 +75,8 @@ export interface AppState {
     kudos: KudosTypes[];
     pagination: Pagination | null;
   };
+  leaderBoard: LeaderboardTypes[] | null;
+  polls: PollState | null;
   loading: {
     teams: LoadingTypes;
     updateTeam: LoadingTypes;
@@ -49,6 +85,8 @@ export interface AppState {
     moodEntries: LoadingTypes;
     members: LoadingTypes;
     kudos: LoadingTypes;
+    leaderBoard: LoadingTypes;
+    polls: LoadingTypes;
   };
   error: string | null;
 }
@@ -62,6 +100,8 @@ const initialState: AppState = {
     kudos: [],
     pagination: null,
   },
+  leaderBoard: null,
+  polls: null,
   loading: {
     teams: "idle",
     updateTeam: "idle",
@@ -70,6 +110,8 @@ const initialState: AppState = {
     moodEntries: "idle",
     members: "idle",
     kudos: "idle",
+    leaderBoard: "idle",
+    polls: "idle",
   },
   error: null,
 };
@@ -199,6 +241,46 @@ export const fetchKudos = createAsyncThunk(
   }
 );
 
+export const fetchLeaderBoard = createAsyncThunk(
+  "kudos/fetchLeaderBoard",
+  async () => {
+    const response = await axios.get(
+      `http://localhost:5000/api/kudos/leaderboard`
+    );
+
+    return await response.data;
+  }
+);
+
+export const fetchPolls = createAsyncThunk(
+  "polls/fetchPolls",
+  async (
+    {
+      page,
+      limit,
+      teamName,
+      startDate,
+      endDate,
+    }: {
+      page: number;
+      limit: number;
+      teamName?: string;
+      startDate?: string;
+      endDate?: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/polls`, {
+        params: { page, limit, teamName, startDate, endDate },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : error);
+    }
+  }
+);
+
 const appSlice = createSlice({
   name: "app",
   initialState,
@@ -315,10 +397,42 @@ const appSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchKudos.fulfilled, (state, action) => {
+        state.loading.kudos = "success";
         state.kudos = action.payload;
       })
       .addCase(fetchKudos.rejected, (state, action) => {
+        state.loading.kudos = "failed";
         state.error = action.error.message || "Failed to fetch kudos";
+      })
+
+      // leaderboard data reducers.
+      .addCase(fetchLeaderBoard.pending, (state) => {
+        state.loading.leaderBoard = "pending";
+        state.error = null;
+      })
+      .addCase(fetchLeaderBoard.fulfilled, (state, action) => {
+        state.loading.leaderBoard = "success";
+        state.leaderBoard = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchLeaderBoard.rejected, (state, action) => {
+        state.loading.leaderBoard = "failed";
+        state.error = action.error.message || "Failed to fetch leader board";
+      })
+
+      // poll data reducers.
+      .addCase(fetchPolls.pending, (state) => {
+        state.loading.polls = "pending";
+        state.error = null;
+      })
+      .addCase(fetchPolls.fulfilled, (state, action) => {
+        state.loading.polls = "success";
+        state.polls = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchPolls.rejected, (state, action) => {
+        state.loading.polls = "failed";
+        state.error = action.error.message || "Failed to fetch polls data";
       });
   },
 });

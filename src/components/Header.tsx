@@ -10,7 +10,7 @@ const Header: React.FC<HeaderTypes> = ({
 }) => {
   const navigate = useNavigate();
   return (
-    <div className="border-slate-200 border-b-2 pb-8  w-full flex sm:justify-between sm:flex-row flex-col items-center gap-4">
+    <div className="border-slate-200 border-b-2 pb-5  w-full flex sm:justify-between sm:flex-row flex-col items-center gap-4">
       <div className="flex items-center gap-2 w-[80%]">
         {back ? (
           <ArrowLeft
