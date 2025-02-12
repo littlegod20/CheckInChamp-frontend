@@ -1,4 +1,6 @@
+import { useAppSelector } from "@/hooks/hooks";
 import { FormTypes } from "@/types/CardWithFormTypes";
+import { Member } from "@/types/Members";
 import { StatusTypes } from "@/types/StandupResponseTypes";
 
 export function convertTo12Hour(time24: string) {
@@ -77,4 +79,16 @@ export const getPendingRemindersCount = (teams: Array<FormTypes>) => {
   });
 
   return pendingReminders.length;
+};
+
+
+export const useMemberResolver = () => {
+  const {members} = useAppSelector((state) => state.app);
+
+  const resolveMemberName = (slackId: string): string => {
+    const member = members.find((m: Member) => m.id === slackId)
+    return member ? member.name : "Unknown Member";
+  };
+
+  return { resolveMemberName };
 };
