@@ -1,74 +1,38 @@
 import { useEffect, useState } from "react";
-import { getPolls, getPollDetails } from "../services/api"; // Import API functions
-
-interface Poll {
-  _id: string;
-  question: string;
-  options: string[];
-  createdBy: string;
-  createdByName?: string;
-  anonymous: boolean;
-  channelId: string;
-  teamName?: string;
-}
-
-interface Vote {
-  userId: string;
-  username: string;
-  selectedOptions: string[];
-}
+// import { getPollDetails } from "../services/api";
+import { fetchPolls, fetchTeams, PollTypes, PollVotes } from "@/store/store";
+import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
+import { Loader2 } from "lucide-react";
+import { FormTypes } from "@/types/CardWithFormTypes";
+import { Button } from "@/components/ui/button";
+import Header from "@/components/Header";
+import { getPollDetails } from "@/services/api";
+import PollCard from "@/components/PollCard";
+import VotesPopup from "@/components/VotesPopup";
 
 const PollsPage = () => {
-  const [polls, setPolls] = useState<Poll[]>([]);
-  const [filteredPolls, setFilteredPolls] = useState<Poll[]>([]);
-  // const [loading, setLoading] = useState<boolean>(true);
-  // const [error, setError] = useState<string | null>(null);
   const [teamSearch, setTeamSearch] = useState<string>("");
-  const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
-  const [voters, setVoters] = useState<Vote[]>([]); // Store voters separately
-  const [detailsLoading, setDetailsLoading] = useState<boolean>(false);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [currentPageLocal, setCurrentPageLocal] = useState(1);
+  const [allTeams, setAllTeams] = useState<Partial<FormTypes[]>>([]);
+  const itemsPerPage = 5;
 
-  useEffect(() => {
-    const fetchPolls = async () => {
-      try {
-        const response = await getPolls();
-        console.log(response.data);
-        setPolls(response.data);
-        setFilteredPolls(response.data);
-      } catch (err) {
-        console.log("Error fetching response", err);
-        // setError(
-        //   err instanceof Error ? err.message : "An unknown error occurred"
-        // );
-      }
-      // finally {
-      //   setLoading(false);
-      // }
-    };
+  const [selectedPoll, setSelectedPoll] = useState<PollTypes | null>(null);
+  const [voters, setVoters] = useState<PollVotes[]>([]); // Store voters separately
 
-    fetchPolls();
-  }, []);
+  const dispatch = useAppDispatch();
+  const { polls, loading } = useAppSelector((state) => state.app);
 
-  const handleSearch = () => {
-    setFilteredPolls(
-      !teamSearch.trim()
-        ? polls
-        : polls.filter((poll) =>
-            poll.teamName?.toLowerCase().includes(teamSearch.toLowerCase())
-          )
-    );
-  };
 
-  const handlePollClick = async (poll: Poll) => {
-    setDetailsLoading(true);
+
+  const handlePollClick = async (poll: PollTypes) => {
     try {
       const response = await getPollDetails(poll._id);
       setSelectedPoll(response.data);
       setVoters(response.data.votes); // Store voters separately
     } catch (err) {
       console.error("Error fetching poll details:", err);
-    } finally {
-      setDetailsLoading(false);
     }
   };
 
@@ -77,103 +41,152 @@ const PollsPage = () => {
     setVoters([]);
   };
 
-  // if (loading) return <p className="text-center">Loading...</p>;
-  // if (error) return <p className="text-red-500 text-center">{error}</p>;
+  // Update the useEffect for initial data fetch
+  useEffect(() => {
+    dispatch(
+      fetchPolls({
+        page: currentPageLocal,
+        limit: itemsPerPage,
+      })
+    );
+
+    dispatch(fetchTeams()).then((action) => {
+      if (fetchTeams.fulfilled.match(action)) {
+        setAllTeams(action.payload); // Remove the "All Teams" entry here
+      }
+    });
+  }, [currentPageLocal, dispatch]);
+
+  // Update handleSearch to handle empty team filter
+  const handleSearch = () => {
+    setCurrentPageLocal(1);
+    dispatch(
+      fetchPolls({
+        page: 1,
+        limit: itemsPerPage,
+        teamName: teamSearch || undefined, // Send undefined if empty
+        startDate,
+        endDate,
+      })
+    );
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPageLocal(Math.max(1, Math.min(newPage, polls?.totalPages || 1)));
+  };
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold text-center mb-6 text-gray-900">
-        All Polls
-      </h1>
+    <div className=" p-6 text-black-primary">
+      <Header title="All Polls" description="View all polls from teams here." />
 
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          placeholder="Search by team..."
-          value={teamSearch}
-          onChange={(e) => setTeamSearch(e.target.value)}
-          className="border p-2 rounded flex-1 text-gray-900"
-        />
-        <button
-          onClick={handleSearch}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          Search
-        </button>
-      </div>
+      {/* Search filters */}
+      <div className="flex gap-2 mb-4 items-end pt-4">
+        {/* Team Filter */}
+        <div className="w-64">
+          <label
+            htmlFor="team"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Team
+          </label>
+          <select
+            id="team"
+            value={teamSearch}
+            onChange={(e) => setTeamSearch(e.target.value)}
+            className="mt-1 block w-full p-2 border text-black border-gray-300 rounded-lg shadow-sm"
+          >
+            <option value="">All Teams</option>
+            {allTeams.map((team) => (
+              <option key={team?.name} value={team?.name}>
+                {team?.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <div>
+            <label
+              htmlFor="team"
+              className="block text-sm font-medium text-gray-700"
+            >
+              From
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="mt-1 border p-2 rounded text-gray-900"
+            />
+          </div>
 
-      {selectedPoll && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            {detailsLoading ? (
-              <p className="text-center text-gray-900">
-                Loading poll details...
-              </p>
-            ) : (
-              <>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {selectedPoll.question}
-                </h2>
-                <ul className="mt-2">
-                  {selectedPoll.options.map((option, index) => (
-                    <li key={index} className="text-gray-900">
-                      - {option}
-                    </li>
-                  ))}
-                </ul>
-
-                <p className="text-sm text-gray-800 mt-2">
-                  Created by:{" "}
-                  <strong>{selectedPoll.createdByName || "Unknown"}</strong>
-                </p>
-
-                <h3 className="text-md font-semibold mt-4 text-gray-900">
-                  Voters:
-                </h3>
-                {voters.length > 0 ? (
-                  <ul className="mt-2">
-                    {voters.map((vote, index) => (
-                      <li key={index} className="text-gray-900">
-                        <strong>{vote.username}</strong> voted for:{" "}
-                        {vote.selectedOptions}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-700">No votes yet.</p>
-                )}
-
-                <button
-                  onClick={closePollDetails}
-                  className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
-                >
-                  Close
-                </button>
-              </>
-            )}
+          <div>
+            <label
+              htmlFor="team"
+              className="mt-1 block text-sm font-medium text-gray-700"
+            >
+              To
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="border p-2 rounded text-gray-900"
+            />
           </div>
         </div>
-      )}
+        <Button
+          className="bg-green-primary hover:bg-green-secondary px-6 py-4"
+          onClick={handleSearch}
+        >
+          Search
+        </Button>
+      </div>
 
-      <div className="space-y-4">
-        {filteredPolls.length > 0 ? (
-          filteredPolls.map((poll) => (
-            <div
-              key={poll._id}
-              className="p-4 border rounded-lg shadow-md bg-white cursor-pointer hover:bg-gray-100"
-              onClick={() => handlePollClick(poll)}
-            >
-              <h2 className="text-lg font-semibold text-gray-900">
-                {poll.question}
-              </h2>
-              <p className="text-sm text-gray-800 mt-2">
-                Team: {poll.teamName || "Unknown"}
-              </p>
-            </div>
+      <VotesPopup
+        selectedPoll={selectedPoll}
+        voters={voters}
+        closePollDetails={closePollDetails}
+      />
+
+      <div className="flex flex-wrap items-center gap-4 pt-6">
+        {loading.polls === "pending" ? (
+          <div className="flex-1 flex justify-center items-center h-[250px]">
+            <Loader2 className="animate-spin text-green-primary" size={40} />
+          </div>
+        ) : polls && polls?.polls.length > 0 ? (
+          polls?.polls.map((poll) => (
+            <PollCard
+              id={poll._id}
+              poll={poll}
+              handlePollClick={handlePollClick}
+            />
           ))
         ) : (
           <p className="text-center text-gray-900">No polls available.</p>
         )}
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-between items-center pt-6 text-white">
+        <button
+          onClick={() => handlePageChange(currentPageLocal - 1)}
+          disabled={currentPageLocal === 1}
+          className="bg-green-primary px-4 py-2 rounded disabled:opacity-50"
+        >
+          Previous
+        </button>
+
+        <span className="text-gray-700">
+          Page {currentPageLocal} of {polls?.totalPages}
+        </span>
+
+        <button
+          onClick={() => handlePageChange(currentPageLocal + 1)}
+          disabled={currentPageLocal === polls?.totalPages}
+          className="bg-green-primary px-4 py-2 rounded disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
