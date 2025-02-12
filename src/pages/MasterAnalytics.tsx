@@ -9,6 +9,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  ArcElement,
 } from "chart.js";
 import { Chart, Line } from "react-chartjs-2";
 import {
@@ -26,14 +27,13 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { api } from "@/services/api";
 import { AnalyticsDataTypes } from "@/types/AnalyticsDataTypes";
-import { useAppDispatch, useAppSelector } from "@/hooks/hooks";
-import { fetchAnalytics } from "@/store/store";
 
 import { jsPDF } from "jspdf";
 import { saveAs } from "file-saver";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 // Register Chart.js components
 ChartJS.register(
@@ -44,7 +44,8 @@ ChartJS.register(
   PointElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ArcElement
 );
 
 const MasterAnalyticsPage = () => {
@@ -54,7 +55,7 @@ const MasterAnalyticsPage = () => {
     end: "",
   });
 
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsDataTypes | null>(
+  const [analytics, setAnalyticsData] = useState<AnalyticsDataTypes | null>(
     null
   );
   const [teams, setTeams] = useState<string[]>([]);
@@ -67,12 +68,18 @@ const MasterAnalyticsPage = () => {
     "polls",
   ]);
 
+  const {
+    data: analyticsData,
+    // isLoading,
+    // error,
+  } = useAnalytics({
+    team: selectedTeam,
+    startDate: dateRange.start,
+    endDate: dateRange.end,
+  });
   const chartRef = useRef<ChartJS>(null);
 
-  const { masterAnalytics } = useAppSelector((state) => state.app);
-  const dispatch = useAppDispatch();
-
-  // Fetch teams and analytics data
+  // Fetch teams
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -91,56 +98,72 @@ const MasterAnalyticsPage = () => {
     fetchData();
   }, [selectedTeam]);
 
-  // fetching master analytics
+  // Set analytics data when data is available
   useEffect(() => {
-    dispatch(
-      fetchAnalytics({
-        team: selectedTeam === "All Teams" ? undefined : selectedTeam,
-        startDate: dateRange.start,
-        endDate: dateRange.end,
-      })
-    );
-  }, [dispatch, selectedTeam, dateRange.end, dateRange.start]);
-
-  // setting master analytics
-  useEffect(() => {
-    setAnalyticsData(masterAnalytics);
-  }, [masterAnalytics]);
+    if (analyticsData) {
+      setAnalyticsData(analyticsData);
+    }
+  }, [analyticsData]);
 
   // Format data for charts
+  // const combinedTrendsData = {
+  //   labels:
+  //     analyticsData?.standups.trends.map(
+  //       (t: {
+  //         _id: string;
+  //         completedStandups: number;
+  //         date: string;
+  //         standupCount: number;
+  //         moodDistribution: {
+  //           happy: number;
+  //           neutral: number;
+  //           sad: number;
+  //         };
+  //       }) => new Date(t._id).toLocaleDateString("en-US", { weekday: "short" })
+  //     ) || [],
+  //   datasets: [
+  //     {
+  //       type: "line" as const,
+  //       label: "Standup Completion",
+  //       data:
+  //         analyticsData?.standups.trends.map(
+  //           (t: {
+  //             _id: string;
+  //             completedStandups: number;
+  //             date: string;
+  //             standupCount: number;
+  //             moodDistribution: {
+  //               happy: number;
+  //               neutral: number;
+  //               sad: number;
+  //             };
+  //           }) => t.completedStandups
+  //         ) || [],
+  //       borderColor: "#3B82F6",
+  //       backgroundColor: "#3B82F6",
+  //       yAxisID: "y",
+  //     },
+  //     {
+  //       type: "bar" as const,
+  //       label: "Happy Moods",
+  //       data:
+  //         analyticsData?.standups.trends.map((m) => m.moodDistribution.happy) ||
+  //         [],
+  //       backgroundColor: "#10B981",
+  //       yAxisID: "y1",
+  //     },
+  //   ],
+  // };
   const combinedTrendsData = {
     labels:
-      analyticsData?.standups.trends.map(
-        (t: {
-          _id: string;
-          completedStandups: number;
-          date: string;
-          standupCount: number;
-          moodDistribution: {
-            happy: number;
-            neutral: number;
-            sad: number;
-          };
-        }) => new Date(t._id).toLocaleDateString("en-US", { weekday: "short" })
+      analytics?.standups.trends.map((t) =>
+        new Date(t.date).toLocaleDateString("en-US", { weekday: "short" })
       ) || [],
     datasets: [
       {
         type: "line" as const,
-        label: "Standup Completion",
-        data:
-          analyticsData?.standups.trends.map(
-            (t: {
-              _id: string;
-              completedStandups: number;
-              date: string;
-              standupCount: number;
-              moodDistribution: {
-                happy: number;
-                neutral: number;
-                sad: number;
-              };
-            }) => t.completedStandups
-          ) || [],
+        label: "Daily Standups",
+        data: analytics?.standups.trends.map((t) => t.standupCount) || [],
         borderColor: "#3B82F6",
         backgroundColor: "#3B82F6",
         yAxisID: "y",
@@ -149,8 +172,7 @@ const MasterAnalyticsPage = () => {
         type: "bar" as const,
         label: "Happy Moods",
         data:
-          analyticsData?.standups.trends.map((m) => m.moodDistribution.happy) ||
-          [],
+          analytics?.standups.trends.map((t) => t.moodDistribution.happy) || [],
         backgroundColor: "#10B981",
         yAxisID: "y1",
       },
@@ -166,7 +188,7 @@ const MasterAnalyticsPage = () => {
           .slice(1)
           .map(
             (team) =>
-              analyticsData?.teamComparison?.find(
+              analytics?.teamComparison?.find(
                 (t: { team: string; kudos: number; polls: number }) =>
                   t.team === team
               )?.kudos || 0
@@ -189,53 +211,7 @@ const MasterAnalyticsPage = () => {
     ],
   };
 
-  const handleExport = async () => {
-    try {
-      const response = await api.get("/analytics/export", {
-        params: {
-          team: selectedTeam === "All Teams" ? undefined : selectedTeam,
-          startDate: dateRange.start,
-          endDate: dateRange.end,
-          metrics: selectedMetrics.join(","),
-        },
-        responseType: "blob",
-      });
-
-      const filename = `Analytics-Report-${new Date().toISOString()}.${exportFormat}`;
-      saveAs(new Blob([response.data]), filename);
-    } catch (error) {
-      console.error("Export failed:", error);
-    }
-  };
-
-  const generateCustomReport = () => {
-    const doc = new jsPDF();
-
-    // Add report title
-    doc.setFontSize(20);
-    doc.text("Custom Analytics Report", 15, 20);
-
-    // Add filters info
-    doc.setFontSize(12);
-    doc.text(`Team: ${selectedTeam}`, 15, 30);
-    doc.text(`Date Range: ${dateRange.start} to ${dateRange.end}`, 15, 35);
-
-    // Add metrics section
-    doc.setFontSize(14);
-    doc.text("Selected Metrics:", 15, 45);
-    selectedMetrics.forEach((metric, index) => {
-      doc.text(`${index + 1}. ${metric}`, 20, 50 + index * 5);
-    });
-
-    // Add simple chart (you can add more complex charts using chart images)
-    if (chartRef.current?.canvas) {
-      doc.addImage(chartRef.current.canvas, "PNG", 15, 100, 180, 80);
-    }
-
-    doc.save(`custom-report-${Date.now()}.pdf`);
-  };
-
-  const recentActivities = analyticsData?.recentActivities;
+  const recentActivities = analytics?.recentActivities;
 
   const reportMetrics = [
     { id: "standups", label: "Standups" },
@@ -252,8 +228,8 @@ const MasterAnalyticsPage = () => {
         {
           label: "Standups",
           data: [
-            analyticsData?.standups.completed || 0,
-            analyticsData?.standups.pending || 0,
+            analytics?.standups.completed || 0,
+            analytics?.standups.pending || 0,
           ],
           backgroundColor: ["#10B981", "#3B82F6"],
         },
@@ -264,11 +240,12 @@ const MasterAnalyticsPage = () => {
       datasets: [
         {
           data: [
-            analyticsData?.moods.happy || 0,
-            analyticsData?.moods.neutral || 0,
-            analyticsData?.moods.sad || 0,
+            analytics?.moods.happy || 0,
+            analytics?.moods.neutral || 0,
+            analytics?.moods.sad || 0,
           ],
           backgroundColor: ["#10B981", "#F59E0B", "#EF4444"],
+          hoverOffset: 4,
         },
       ],
     },
@@ -284,7 +261,7 @@ const MasterAnalyticsPage = () => {
       datasets: [
         {
           label: "Kudos Given",
-          data: analyticsData?.kudos.trends || [],
+          data: analyticsData?.kudos.trends?.map((t) => t.count) ?? [],
           borderColor: "#8B5CF6",
           backgroundColor: "#8B5CF6",
         },
@@ -302,39 +279,182 @@ const MasterAnalyticsPage = () => {
     },
   };
 
-  // // Trends Data
-  // const trendsData = {
-  //   labels:
-  //     analyticsData?.standups.trends.map((t) =>
-  //       new Date(t._id).toLocaleDateString("en-US", {
-  //         month: "short",
-  //         day: "numeric",
-  //       })
-  //     ) || [],
-  //   datasets: [
-  //     {
-  //       label: "Standups Completed",
-  //       data:
-  //         analyticsData?.standups.trends.map((t) => t.completedStandups) || [],
-  //       borderColor: "#3B82F6",
-  //       backgroundColor: "#3B82F6",
-  //     },
-  //     {
-  //       label: "Happy Moods",
-  //       data:
-  //         analyticsData?.standups.trends.map((t) => t.moodDistribution.happy) ||
-  //         [],
-  //       borderColor: "#10B981",
-  //       backgroundColor: "#10B981",
-  //     },
-  //     {
-  //       label: "Kudos Given",
-  //       data: analyticsData?.kudos.trends || [],
-  //       borderColor: "#8B5CF6",
-  //       backgroundColor: "#8B5CF6",
-  //     },
-  //   ],
-  // };
+  // Trends Data
+  const trendsData = {
+    labels:
+      analyticsData?.standups.trends.map((t) =>
+        new Date(t._id).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+      ) || [],
+    datasets: [
+      {
+        label: "Standups Completed",
+        data:
+          analyticsData?.standups.trends.map((t) => t.completedStandups) || [],
+        borderColor: "#3B82F6",
+        backgroundColor: "#3B82F6",
+      },
+      {
+        label: "Happy Moods",
+        data:
+          analyticsData?.standups.trends.map((t) => t.moodDistribution.happy) ||
+          [],
+        borderColor: "#10B981",
+        backgroundColor: "#10B981",
+      },
+      {
+        label: "Kudos Given",
+        data: analyticsData?.kudos.trends?.map((t) => t.count) ?? [],
+        borderColor: "#8B5CF6",
+        backgroundColor: "#8B5CF6",
+      },
+    ],
+  };
+
+  const handleExport = async () => {
+    try {
+      if (selectedMetrics.length === 0) {
+        alert("Please select at least one metric!");
+        return;
+      }
+
+      const response = await api.get("/master/export", {
+        params: {
+          team: selectedTeam === "All Teams" ? undefined : selectedTeam,
+          startDate: dateRange.start,
+          endDate: dateRange.end,
+          metrics: selectedMetrics.join(","),
+          format: "csv",
+        },
+        responseType: "blob",
+      });
+
+      console.log("response.data:", response.data);
+
+      const filename = `Analytics-Report-${new Date().toISOString()}.${"csv"}`;
+      saveAs(new Blob([response.data]), filename);
+    } catch (error) {
+      console.error("Export failed:", error);
+    }
+  };
+
+  const generateCustomReport = () => {
+    // Validate selected metrics
+    if (selectedMetrics.length === 0) {
+      alert("Please select at least one metric!");
+      return;
+    }
+
+    if (exportFormat === "pdf") {
+      // PDF Generation
+      const doc = new jsPDF();
+
+      // Title
+      doc.setFontSize(20);
+      doc.text("Custom Analytics Report", 15, 20);
+
+      // Filters
+      doc.setFontSize(12);
+      doc.text(`Team: ${selectedTeam}`, 15, 30);
+      doc.text(`Date Range: ${dateRange.start} to ${dateRange.end}`, 15, 35);
+
+      // Selected Metrics
+      doc.setFontSize(14);
+      doc.text("Selected Metrics:", 15, 45);
+      selectedMetrics.forEach((metric, index) => {
+        doc.text(`${index + 1}. ${metric}`, 20, 50 + index * 5);
+      });
+
+      // Add chart image
+      if (chartRef.current?.canvas) {
+        doc.addImage(chartRef.current.canvas, "PNG", 15, 100, 180, 80);
+      }
+
+      doc.save(`custom-report-${Date.now()}.pdf`);
+    } else if (exportFormat === "csv") {
+      // CSV Generation
+      const csvContent = generateCSVContent();
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `custom-report-${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  // Helper function to generate CSV content
+  const generateCSVContent = () => {
+    const headers = ["Metric", "Value", "Date"];
+    const rows: string[][] = [];
+
+    // Add data for selected metrics
+    selectedMetrics.forEach((metric) => {
+      switch (metric) {
+        case "standups":
+          rows.push(
+            [
+              "Standups Completed",
+              analyticsData?.standups.completed?.toString() || "0",
+              "",
+            ],
+            [
+              "Standups Pending",
+              analyticsData?.standups.pending?.toString() || "0",
+              "",
+            ]
+          );
+          break;
+
+        case "moods":
+          rows.push(
+            ["Happy Moods", analyticsData?.moods.happy?.toString() || "0", ""],
+            [
+              "Neutral Moods",
+              analyticsData?.moods.neutral?.toString() || "0",
+              "",
+            ],
+            ["Sad Moods", analyticsData?.moods.sad?.toString() || "0", ""]
+          );
+          break;
+
+        case "kudos":
+          analyticsData?.kudos.trends?.forEach((trend) => {
+            rows.push([
+              "Kudos Given",
+              trend.count.toString(),
+              new Date(trend._id).toLocaleDateString(),
+            ]);
+          });
+          break;
+
+        case "polls":
+          analyticsData?.polls.mostPopular?.forEach((poll) => {
+            rows.push(["Poll Votes", poll.count.toString(), poll._id]);
+          });
+          break;
+      }
+    });
+
+    // Convert to CSV string
+    return [
+      headers.join(","),
+      ...rows.map((row) => row.map(escapeCSV).join(",")),
+    ].join("\n");
+  };
+
+  // Helper to escape CSV values
+  const escapeCSV = (value: string) => {
+    if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-black-secondary">
@@ -606,11 +726,21 @@ const MasterAnalyticsPage = () => {
               <div className="p-4">
                 <h4 className="font-medium mb-2">Mood Distribution</h4>
                 <div className="h-48">
-                  <Chart
-                    type="pie"
-                    data={performanceData.moodDistribution}
-                    options={{ responsive: true }}
-                  />
+                  {analyticsData && (
+                    <Chart
+                      key={JSON.stringify(performanceData.moodDistribution)}
+                      type="pie"
+                      data={performanceData.moodDistribution}
+                      options={{
+                        responsive: true,
+                        plugins: {
+                          legend: {
+                            position: "top",
+                          },
+                        },
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -645,7 +775,7 @@ const MasterAnalyticsPage = () => {
             <div className="p-4">
               <h4 className="font-medium mb-2">Activity Trends Over Time</h4>
               <div className="h-64">
-                {/* <Chart
+                <Chart
                   type="line"
                   data={trendsData}
                   options={{
@@ -659,7 +789,7 @@ const MasterAnalyticsPage = () => {
                       },
                     },
                   }}
-                /> */}
+                />
               </div>
             </div>
           </TabsContent>
