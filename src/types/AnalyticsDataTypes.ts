@@ -24,8 +24,8 @@ export interface AnalyticsDataTypes {
   };
   kudos: {
     given: number;
-    topReceiver: { _id: string; count: 2 }[];
-    topCategory: { _id: string; count: 2 }[];
+    topReceiver: { _id: string; count: number }[];
+    topCategory: { _id: string; count: number }[];
     trends?: {
       _id:string;
       count:number
